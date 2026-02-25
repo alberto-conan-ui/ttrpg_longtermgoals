@@ -58,9 +58,9 @@ DMs can create campaigns, list their campaigns, and view campaign details. Campa
 
 ## Stage 4 — Player Invitations
 
-**Status:** Planned
+**Status:** Done
 
-DMs invite players to campaigns via invite codes.
+DMs generate invite codes for campaigns. Players join via invite code from the campaign list page.
 
 **Suggested prompt:**
 > "Implement the invite flow: DMs can generate an invite code for their campaign, other registered users can join via that code. Show campaign members on the detail page. Update docs."

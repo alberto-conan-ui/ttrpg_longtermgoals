@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useParams } from '@tanstack/react-router';
-import { useCampaign } from '../hooks/use-campaigns';
+import { useCampaign, useGenerateInvite } from '../hooks/use-campaigns';
 
 export function CampaignDetailPage() {
   const { campaignId } = useParams({ strict: false }) as {
     campaignId: string;
   };
   const { data: campaign, isLoading } = useCampaign(campaignId);
+  const generateInvite = useGenerateInvite(campaignId);
+  const [copied, setCopied] = useState(false);
 
   if (isLoading) {
     return (
@@ -25,6 +28,14 @@ export function CampaignDetailPage() {
 
   const dm = campaign.members.find((m) => m.role === 'dm');
   const players = campaign.members.filter((m) => m.role === 'player');
+
+  const handleCopyCode = () => {
+    if (campaign.inviteCode) {
+      navigator.clipboard.writeText(campaign.inviteCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl p-8">
@@ -46,8 +57,55 @@ export function CampaignDetailPage() {
         </span>
       </div>
 
+      {/* Invite Code — DM only */}
+      {campaign.role === 'dm' && (
+        <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">Invite Players</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Share this code with players so they can join your campaign.
+          </p>
+          <div className="mt-4 flex items-center gap-3">
+            {campaign.inviteCode ? (
+              <>
+                <code className="rounded-lg bg-gray-100 px-4 py-2 text-lg font-mono font-bold tracking-widest text-violet-700">
+                  {campaign.inviteCode}
+                </code>
+                <button
+                  onClick={handleCopyCode}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => generateInvite.mutate()}
+                  disabled={generateInvite.isPending}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  {generateInvite.isPending ? 'Generating...' : 'Regenerate'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => generateInvite.mutate()}
+                disabled={generateInvite.isPending}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                {generateInvite.isPending
+                  ? 'Generating...'
+                  : 'Generate Invite Code'}
+              </button>
+            )}
+          </div>
+          {generateInvite.error && (
+            <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {generateInvite.error.message}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Members */}
-      <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-gray-900">Members</h2>
         <div className="mt-4 space-y-3">
           {dm && (

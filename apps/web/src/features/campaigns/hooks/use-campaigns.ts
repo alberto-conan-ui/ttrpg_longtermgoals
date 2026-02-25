@@ -60,3 +60,30 @@ export function useCreateCampaign() {
     },
   });
 }
+
+export function useGenerateInvite(campaignId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      api.post<{ inviteCode: string }>(`/api/campaigns/${campaignId}/invite`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns', campaignId] });
+    },
+  });
+}
+
+export function useJoinCampaign() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { inviteCode: string }) =>
+      api.post<{ campaignId: string; campaignName: string; role: string }>(
+        '/api/campaigns/join',
+        data,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+    },
+  });
+}

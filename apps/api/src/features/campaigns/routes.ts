@@ -189,4 +189,128 @@ app.get('/:id', async (c) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// POST /api/campaigns/:id/invite — Generate/regenerate invite code (DM only)
+// ---------------------------------------------------------------------------
+app.post('/:id/invite', async (c) => {
+  const user = c.get('user');
+  const campaignId = c.req.param('id');
+
+  // Verify user is the DM
+  const [membership] = await db
+    .select()
+    .from(campaignMembers)
+    .where(
+      and(
+        eq(campaignMembers.campaignId, campaignId),
+        eq(campaignMembers.userId, user.id),
+        eq(campaignMembers.role, 'dm'),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new ApiError(
+      403,
+      'NOT_DM',
+      'Only the DM can generate invite codes',
+    );
+  }
+
+  // Generate a short random invite code
+  const code = crypto.randomUUID().slice(0, 8).toUpperCase();
+
+  const [updated] = await db
+    .update(campaigns)
+    .set({ inviteCode: code, updatedAt: new Date() })
+    .where(eq(campaigns.id, campaignId))
+    .returning();
+
+  if (!updated) {
+    throw new ApiError(404, 'CAMPAIGN_NOT_FOUND', 'Campaign not found');
+  }
+
+  return c.json({ data: { inviteCode: code } });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/campaigns/join — Join a campaign via invite code
+// ---------------------------------------------------------------------------
+const joinSchema = z.object({
+  inviteCode: z.string().min(1),
+});
+
+app.post(
+  '/join',
+  zValidator('json', joinSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid join data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const { inviteCode } = c.req.valid('json');
+
+    // Find campaign by invite code
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.inviteCode, inviteCode.toUpperCase()))
+      .limit(1);
+
+    if (!campaign) {
+      throw new ApiError(
+        404,
+        'INVALID_INVITE_CODE',
+        'No campaign found with that invite code',
+      );
+    }
+
+    // Check if already a member
+    const [existing] = await db
+      .select()
+      .from(campaignMembers)
+      .where(
+        and(
+          eq(campaignMembers.campaignId, campaign.id),
+          eq(campaignMembers.userId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      throw new ApiError(
+        409,
+        'ALREADY_MEMBER',
+        'You are already a member of this campaign',
+      );
+    }
+
+    // Add as player
+    await db.insert(campaignMembers).values({
+      campaignId: campaign.id,
+      userId: user.id,
+      role: 'player',
+    });
+
+    return c.json({
+      data: {
+        campaignId: campaign.id,
+        campaignName: campaign.name,
+        role: 'player' as const,
+      },
+    });
+  },
+);
+
 export default app;

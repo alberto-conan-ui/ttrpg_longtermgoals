@@ -32,12 +32,12 @@ Living index of all API endpoints. Updated each stage.
 | GET | `/api/campaigns` | Yes | List user's campaigns |
 | GET | `/api/campaigns/:id` | Yes (member) | Get campaign details with members |
 
-## Invitations (Stage 4)
+## Invitations (Stage 4 — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/api/campaigns/:id/invite` | Yes (DM) | Generate/regenerate invite code |
-| POST | `/api/campaigns/:id/join` | Yes | Join campaign via invite code |
+| POST | `/api/campaigns/join` | Yes | Join campaign via invite code |
 
 ## Investigation Tracks (Stage 5)
 

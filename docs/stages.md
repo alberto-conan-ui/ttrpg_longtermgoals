@@ -4,9 +4,9 @@ This document tracks the planned development stages for TTRPG Long-Term Goals. E
 
 ---
 
-## Stage 1 — Infrastructure & Documentation (current)
+## Stage 1 — Infrastructure & Documentation
 
-**Status:** In Progress
+**Status:** Done
 
 Set up project foundation: README, SKILLS, docs, Docker Compose, database schema, seed data, env config.
 
@@ -23,9 +23,9 @@ Set up project foundation: README, SKILLS, docs, Docker Compose, database schema
 
 ## Stage 2 — Authentication
 
-**Status:** Planned
+**Status:** Done
 
-Implement Lucia v3 auth with Google OAuth, Discord OAuth, and local username/password (test env only). Wire up session middleware, auth API routes, and a simple frontend login page.
+Custom session-based auth (post-Lucia pattern using @oslojs/*), Google & Discord OAuth via Arctic, local username/password (test env only). Session middleware, auth API routes, frontend login/register/dashboard pages with TanStack Router + Query.
 
 **Suggested prompt:**
 > "Implement auth: Lucia v3 with Google OAuth, Discord OAuth, and local username/password (test env only). Include the provider-extensible pattern from SKILLS.md. Wire up all auth API routes, session middleware, and a simple test page on the frontend to verify login/logout works."

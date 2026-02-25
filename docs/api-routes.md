@@ -10,7 +10,7 @@ Living index of all API endpoints. Updated each stage.
 |---|---|---|---|
 | GET | `/api/health` | No | Health check |
 
-## Auth (Stage 2)
+## Auth (Stage 2 — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
@@ -22,6 +22,7 @@ Living index of all API endpoints. Updated each stage.
 | POST | `/api/auth/login` | No | Local login (test env only) |
 | POST | `/api/auth/logout` | Yes | Invalidate session |
 | GET | `/api/auth/me` | Yes | Get current user |
+| GET | `/api/auth/providers` | No | List available auth providers |
 
 ## Campaigns (Stage 3)
 

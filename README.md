@@ -35,7 +35,7 @@ The monorepo is managed by **Nx** with **pnpm** as the package manager.
 | **Web** | React 19 + Vite 7 |
 | **Database** | PostgreSQL 16 (Docker Compose) |
 | **ORM** | Drizzle ORM + drizzle-kit |
-| **Auth** | Lucia v3 + Arctic (Google, Discord) + local (test env) |
+| **Auth** | Custom sessions (@oslojs/*) + Arctic (Google, Discord OAuth) + local (test env) |
 | **Frontend routing** | TanStack Router |
 | **Server state** | TanStack Query |
 | **UI** | TailwindCSS v4 + shadcn/ui + Lucide icons |

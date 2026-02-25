@@ -1,7 +1,21 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
+import { cors } from 'hono/cors';
+import { env } from './config/env';
+import { errorHandler } from './lib/error-middleware';
+import authRoutes from './features/auth/routes';
 
 const app = new Hono();
+
+app.use(
+  '*',
+  cors({
+    origin: env.WEB_URL,
+    credentials: true,
+  }),
+);
+
+app.onError(errorHandler);
 
 app.get('/', (c) => {
   return c.json({ message: 'Hello from TTRPG Long-Term Goals API!' });
@@ -10,6 +24,8 @@ app.get('/', (c) => {
 app.get('/api/health', (c) => {
   return c.json({ status: 'ok' });
 });
+
+app.route('/api/auth', authRoutes);
 
 const port = 3000;
 console.log(`Server is running on http://localhost:${port}`);

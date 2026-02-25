@@ -346,17 +346,21 @@ Never write raw SQL outside of migration files. All application queries go throu
 
 ## Auth Pattern
 
-Session-based authentication using Lucia v3 with database-backed sessions.
+Custom session-based authentication (post-Lucia pattern using `@oslojs/*`) with database-backed sessions.
 
+- Sessions are generated with `@oslojs/encoding` (base32, 25 random bytes)
 - Sessions are stored in PostgreSQL, referenced by a secure httpOnly cookie
-- OAuth providers are extensible: add a new file in `features/auth/providers/`
+- Sessions auto-refresh when past 50% of their 30-day expiry
+- OAuth providers use Arctic v3 and are extensible: one file per provider in `features/auth/providers/`
 - Local username/password auth is available when `NODE_ENV !== 'production'` or `ENABLE_LOCAL_AUTH` is `true`
-- Password hashing uses `@node-rs/argon2`
+- Password hashing uses `@node-rs/argon2` (Argon2id, OWASP recommended)
+- See [ADR-002](docs/adr/002-auth-implementation.md) for why we use custom sessions instead of Lucia v3
 
 Adding a new OAuth provider:
 
 1. Create `apps/api/src/features/auth/providers/<provider>.ts`
-2. Add env vars for client ID/secret
-3. Add routes for `/api/auth/<provider>` and `/api/auth/<provider>/callback`
+2. Add env vars for client ID/secret to `.env.example` and `config/env.ts`
+3. Add routes for `/api/auth/<provider>` and `/api/auth/<provider>/callback` in `features/auth/routes.ts`
 4. Add the provider's ID column to the `users` schema
 5. Generate and apply the migration
+6. Update the `findOrCreateOAuthUser` helper if the provider uses a different profile shape

@@ -39,13 +39,14 @@ Living index of all API endpoints. Updated each stage.
 | POST | `/api/campaigns/:id/invite` | Yes (DM) | Generate/regenerate invite code |
 | POST | `/api/campaigns/join` | Yes | Join campaign via invite code |
 
-## Investigation Tracks (Stage 5)
+## Investigation Tracks (Stage 5 — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/api/campaigns/:id/tracks` | Yes (DM) | Create investigation track |
-| GET | `/api/campaigns/:id/tracks` | Yes | List tracks for campaign |
-| GET | `/api/tracks/:id` | Yes | Get track details with progress |
+| POST | `/api/campaigns/:id/tracks` | Yes (DM) | Create investigation track (with optional milestones) |
+| GET | `/api/campaigns/:id/tracks` | Yes (member) | List tracks for campaign with progress summary |
+| GET | `/api/tracks/:id` | Yes (member) | Get track details with milestones and player progress |
+| POST | `/api/tracks/:id/progress` | Yes (DM) | Update player progress on a track |
 
 ## Downtime Phases (Stage 6)
 

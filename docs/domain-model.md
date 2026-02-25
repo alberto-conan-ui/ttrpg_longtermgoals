@@ -80,9 +80,7 @@ This document describes the entity-relationship model for TTRPG Long-Term Goals.
 
 ---
 
-## Future Stages (planned, not yet implemented)
-
-### Stage 5 — Investigation Tracks
+## Stage 5 — Investigation Tracks
 
 ```
 ┌──────────────────────────────┐
@@ -110,11 +108,22 @@ This document describes the entity-relationship model for TTRPG Long-Term Goals.
 ├──────────────────────────────┤
 │ player_id     UUID FK→users  │
 │ track_id      UUID FK        │
-│ progress      INT             │
+│ progress      INT DEFAULT 0   │
 │ updated_at    TIMESTAMPTZ     │
 │ PK(player_id, track_id)     │
 └──────────────────────────────┘
 ```
+
+### Relationships
+
+- **investigation_tracks → campaigns**: Each track belongs to one campaign (N:1)
+- **track_milestones → investigation_tracks**: Each milestone belongs to one track (N:1)
+- **player_track_progress**: Join table linking players to tracks with progress (M:N)
+- DM updates player progress via `POST /api/tracks/:id/progress` (upsert)
+
+---
+
+## Future Stages (planned, not yet implemented)
 
 ### Stage 6 — Downtime Phases
 

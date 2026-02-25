@@ -74,9 +74,9 @@ DMs generate invite codes for campaigns. Players join via invite code from the c
 
 ## Stage 5 — Investigation Tracks (Core Feature)
 
-**Status:** Planned
+**Status:** Done
 
-DMs define investigation tracks within a campaign. Players can pursue them during downtime.
+DMs define investigation tracks with milestones within a campaign. DMs update player progress. Track list with progress bars on campaign detail, dedicated track detail page with milestone visualization.
 
 **Suggested prompt:**
 > "Implement investigation tracks: DMs can create investigation tracks within a campaign, each with a name, description, and progress milestones. Players can spend idle time to advance their progress on a track. Show progress per player per track. This is the core feature — let's design the schema carefully."

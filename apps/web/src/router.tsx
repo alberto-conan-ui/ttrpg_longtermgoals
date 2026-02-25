@@ -13,6 +13,7 @@ import { LoginPage } from './features/auth/components/login-page';
 import { RegisterPage } from './features/auth/components/register-page';
 import { CampaignListPage } from './features/campaigns/components/campaign-list-page';
 import { CampaignDetailPage } from './features/campaigns/components/campaign-detail-page';
+import { TrackDetailPage } from './features/tracks/components/track-detail-page';
 import { useAuth, useLogout } from './features/auth/hooks/use-auth';
 
 // ---------------------------------------------------------------------------
@@ -142,6 +143,12 @@ const campaignDetailRoute = createRoute({
   component: CampaignDetailPage,
 });
 
+const trackDetailRoute = createRoute({
+  getParentRoute: () => authenticatedRoute,
+  path: '/tracks/$trackId',
+  component: TrackDetailPage,
+});
+
 // ---------------------------------------------------------------------------
 // Route tree
 // ---------------------------------------------------------------------------
@@ -152,6 +159,7 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     campaignsRoute,
     campaignDetailRoute,
+    trackDetailRoute,
   ]),
 ]);
 

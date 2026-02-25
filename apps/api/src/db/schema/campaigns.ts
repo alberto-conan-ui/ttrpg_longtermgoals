@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, uuid, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users } from './users';
+import { investigationTracks } from './tracks';
 
 export const campaigns = pgTable('campaigns', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -24,6 +25,7 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
     references: [users.id],
   }),
   members: many(campaignMembers),
+  tracks: many(investigationTracks),
 }));
 
 export const campaignRoleEnum = pgEnum('campaign_role', ['dm', 'player']);

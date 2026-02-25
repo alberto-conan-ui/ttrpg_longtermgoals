@@ -15,6 +15,13 @@
       "when": 1772054982086,
       "tag": "0001_true_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772056617769,
+      "tag": "0002_deep_warbound",
+      "breakpoints": true
     }
   ]
 }

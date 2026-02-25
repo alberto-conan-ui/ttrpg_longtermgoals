@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { useParams } from '@tanstack/react-router';
+import { useParams, Link } from '@tanstack/react-router';
 import { useCampaign, useGenerateInvite } from '../hooks/use-campaigns';
+import {
+  useTracks,
+  useCreateTrack,
+} from '../../tracks/hooks/use-tracks';
 
 export function CampaignDetailPage() {
   const { campaignId } = useParams({ strict: false }) as {
@@ -8,7 +12,57 @@ export function CampaignDetailPage() {
   };
   const { data: campaign, isLoading } = useCampaign(campaignId);
   const generateInvite = useGenerateInvite(campaignId);
+  const { data: tracks } = useTracks(campaignId);
+  const createTrack = useCreateTrack(campaignId);
   const [copied, setCopied] = useState(false);
+  const [showCreateTrack, setShowCreateTrack] = useState(false);
+  const [trackName, setTrackName] = useState('');
+  const [trackDesc, setTrackDesc] = useState('');
+  const [milestones, setMilestones] = useState<
+    { title: string; threshold: number; description: string }[]
+  >([]);
+
+  const handleCreateTrack = (e: React.FormEvent) => {
+    e.preventDefault();
+    createTrack.mutate(
+      {
+        name: trackName,
+        description: trackDesc || undefined,
+        milestones: milestones.length > 0
+          ? milestones.map((m) => ({
+              ...m,
+              description: m.description || undefined,
+            }))
+          : undefined,
+      },
+      {
+        onSuccess: () => {
+          setTrackName('');
+          setTrackDesc('');
+          setMilestones([]);
+          setShowCreateTrack(false);
+        },
+      },
+    );
+  };
+
+  const addMilestone = () => {
+    setMilestones([...milestones, { title: '', threshold: 0, description: '' }]);
+  };
+
+  const removeMilestone = (index: number) => {
+    setMilestones(milestones.filter((_, i) => i !== index));
+  };
+
+  const updateMilestone = (
+    index: number,
+    field: 'title' | 'threshold' | 'description',
+    value: string | number,
+  ) => {
+    const updated = [...milestones];
+    updated[index] = { ...updated[index], [field]: value };
+    setMilestones(updated);
+  };
 
   if (isLoading) {
     return (
@@ -167,10 +221,171 @@ export function CampaignDetailPage() {
         </div>
       </div>
 
+      {/* Investigation Tracks */}
+      <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Investigation Tracks
+          </h2>
+          {campaign.role === 'dm' && (
+            <button
+              onClick={() => setShowCreateTrack(!showCreateTrack)}
+              className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-violet-700 transition-colors"
+            >
+              {showCreateTrack ? 'Cancel' : 'New Track'}
+            </button>
+          )}
+        </div>
+
+        {showCreateTrack && campaign.role === 'dm' && (
+          <form onSubmit={handleCreateTrack} className="mt-4 space-y-3 border-t border-gray-100 pt-4">
+            <div>
+              <label htmlFor="track-name" className="block text-sm font-medium text-gray-700">
+                Track Name
+              </label>
+              <input
+                id="track-name"
+                type="text"
+                required
+                value={trackName}
+                onChange={(e) => setTrackName(e.target.value)}
+                placeholder="e.g. The Missing Merchant"
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="track-desc" className="block text-sm font-medium text-gray-700">
+                Description (optional)
+              </label>
+              <textarea
+                id="track-desc"
+                value={trackDesc}
+                onChange={(e) => setTrackDesc(e.target.value)}
+                rows={2}
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+              />
+            </div>
+
+            {/* Milestones */}
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Milestones</span>
+                <button
+                  type="button"
+                  onClick={addMilestone}
+                  className="text-xs text-violet-600 hover:text-violet-500"
+                >
+                  + Add milestone
+                </button>
+              </div>
+              {milestones.map((m, i) => (
+                <div key={i} className="mt-2 flex items-start gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={m.title}
+                    onChange={(e) => updateMilestone(i, 'title', e.target.value)}
+                    placeholder="Milestone title"
+                    className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+                  />
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={m.threshold || ''}
+                    onChange={(e) => updateMilestone(i, 'threshold', parseInt(e.target.value) || 0)}
+                    placeholder="Pts"
+                    className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeMilestone(i)}
+                    className="text-xs text-red-500 hover:text-red-700 py-1.5"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {createTrack.error && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {createTrack.error.message}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={createTrack.isPending}
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 transition-colors"
+            >
+              {createTrack.isPending ? 'Creating...' : 'Create Track'}
+            </button>
+          </form>
+        )}
+
+        {/* Track list */}
+        <div className="mt-4 space-y-3">
+          {tracks && tracks.length === 0 && (
+            <p className="text-sm text-gray-500">
+              No investigation tracks yet.
+              {campaign.role === 'dm' && ' Create one to get started.'}
+            </p>
+          )}
+          {tracks?.map((track) => (
+            <Link
+              key={track.id}
+              to="/tracks/$trackId"
+              params={{ trackId: track.id }}
+              className="block rounded-lg border border-gray-100 p-4 hover:border-violet-300 hover:shadow-sm transition-all"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {track.name}
+                  </h3>
+                  {track.description && (
+                    <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
+                      {track.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2 text-xs text-gray-400">
+                  <span>{track.milestoneCount} milestones</span>
+                  <span>{track.playerProgress.length} tracking</span>
+                </div>
+              </div>
+              {track.playerProgress.length > 0 && track.maxThreshold > 0 && (
+                <div className="mt-2 space-y-1">
+                  {track.playerProgress.map((pp) => (
+                    <div key={pp.playerId} className="flex items-center gap-2">
+                      <span className="w-20 truncate text-xs text-gray-500">
+                        {pp.displayName}
+                      </span>
+                      <div className="flex-1 h-1.5 rounded-full bg-gray-100">
+                        <div
+                          className="h-1.5 rounded-full bg-violet-400"
+                          style={{
+                            width: `${Math.min((pp.progress / track.maxThreshold) * 100, 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {pp.progress}/{track.maxThreshold}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Placeholder for future stages */}
       <div className="mt-8 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
         <p className="text-sm text-gray-500">
-          Investigation tracks &amp; downtime phases coming in later stages
+          Downtime phases coming in Stage 6
         </p>
       </div>
     </div>

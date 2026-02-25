@@ -2,7 +2,14 @@ import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { hash } from '@node-rs/argon2';
-import { users, campaigns, campaignMembers } from './schema';
+import {
+  users,
+  campaigns,
+  campaignMembers,
+  investigationTracks,
+  trackMilestones,
+  playerTrackProgress,
+} from './schema';
 import { sql, eq } from 'drizzle-orm';
 
 const DATABASE_URL = process.env['DATABASE_URL'];
@@ -132,6 +139,98 @@ async function seed() {
     console.log(
       `  Created campaign: ${c.name} (DM: ${c.dmEmail}, ${c.playerEmails.length} players)`,
     );
+  }
+
+  // --- Investigation Tracks (for first campaign: Curse of Strahd) ---
+  // Find the Curse of Strahd campaign
+  const [strahd] = await db
+    .select()
+    .from(campaigns)
+    .where(eq(campaigns.name, 'Curse of Strahd'))
+    .limit(1);
+
+  if (strahd) {
+    const existingTracks = await db
+      .select()
+      .from(investigationTracks)
+      .where(eq(investigationTracks.campaignId, strahd.id))
+      .limit(1);
+
+    if (existingTracks.length === 0) {
+      // Track 1: The Amber Temple
+      const [track1] = await db
+        .insert(investigationTracks)
+        .values({
+          campaignId: strahd.id,
+          name: 'The Amber Temple',
+          description:
+            'Ancient secrets lie buried in the Amber Temple. Research its location and defenses.',
+        })
+        .returning();
+
+      await db.insert(trackMilestones).values([
+        {
+          trackId: track1.id,
+          title: 'Heard rumors of the temple',
+          threshold: 3,
+          description: 'Locals mention an ancient place of power in the mountains.',
+        },
+        {
+          trackId: track1.id,
+          title: 'Found a map fragment',
+          threshold: 6,
+          description: 'A partial map reveals the general location.',
+        },
+        {
+          trackId: track1.id,
+          title: 'Decoded the wards',
+          threshold: 10,
+          description: 'You understand the magical protections and can bypass them.',
+        },
+      ]);
+
+      // Add some player progress
+      const player1Id = await getUserIdByEmail('player1@test.local');
+      const player2Id = await getUserIdByEmail('player2@test.local');
+      await db.insert(playerTrackProgress).values([
+        { playerId: player1Id, trackId: track1.id, progress: 5 },
+        { playerId: player2Id, trackId: track1.id, progress: 2 },
+      ]);
+
+      // Track 2: Strahd's Weakness
+      const [track2] = await db
+        .insert(investigationTracks)
+        .values({
+          campaignId: strahd.id,
+          name: "Strahd's Weakness",
+          description:
+            'Every vampire lord has a weakness. Discover what can be used against Strahd.',
+        })
+        .returning();
+
+      await db.insert(trackMilestones).values([
+        {
+          trackId: track2.id,
+          title: 'The Sunsword legend',
+          threshold: 4,
+          description: 'You learn of a legendary weapon that can harm Strahd.',
+        },
+        {
+          trackId: track2.id,
+          title: 'The Holy Symbol of Ravenkind',
+          threshold: 8,
+          description: 'An ancient holy relic that can turn undead.',
+        },
+      ]);
+
+      await db.insert(playerTrackProgress).values([
+        { playerId: player1Id, trackId: track2.id, progress: 4 },
+      ]);
+
+      console.log('  Created investigation tracks for Curse of Strahd');
+    } else {
+      console.log('  Investigation tracks already exist (skipped)');
+    }
   }
 
   console.log('Seed complete.');

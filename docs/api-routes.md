@@ -24,13 +24,13 @@ Living index of all API endpoints. Updated each stage.
 | GET | `/api/auth/me` | Yes | Get current user |
 | GET | `/api/auth/providers` | No | List available auth providers |
 
-## Campaigns (Stage 3)
+## Campaigns (Stage 3 — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/api/campaigns` | Yes | Create campaign (caller becomes DM) |
 | GET | `/api/campaigns` | Yes | List user's campaigns |
-| GET | `/api/campaigns/:id` | Yes | Get campaign details |
+| GET | `/api/campaigns/:id` | Yes (member) | Get campaign details with members |
 
 ## Invitations (Stage 4)
 

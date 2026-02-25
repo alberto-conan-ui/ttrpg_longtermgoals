@@ -7,7 +7,7 @@ import {
 } from './session';
 import { ApiError } from '../../lib/api-error';
 
-type AuthEnv = {
+export type AuthEnv = {
   Variables: {
     user: NonNullable<SessionValidationResult['user']>;
     sessionId: string;

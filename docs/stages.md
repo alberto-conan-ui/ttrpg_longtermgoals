@@ -41,9 +41,9 @@ Custom session-based auth (post-Lucia pattern using @oslojs/*), Google & Discord
 
 ## Stage 3 — Campaign CRUD
 
-**Status:** Planned
+**Status:** Done
 
-DMs can create campaigns, list their campaigns, and view campaign details.
+DMs can create campaigns, list their campaigns, and view campaign details. Campaign members table tracks DM and player roles.
 
 **Suggested prompt:**
 > "Implement campaign creation and management. A logged-in user can create a campaign (becoming its DM), list their campaigns, and view campaign details. Follow the patterns in SKILLS.md. Update domain-model.md and api-routes.md."

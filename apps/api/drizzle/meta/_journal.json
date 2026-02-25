@@ -8,6 +8,13 @@
       "when": 1772034221555,
       "tag": "0000_numerous_the_hand",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772054982086,
+      "tag": "0001_true_bastion",
+      "breakpoints": true
     }
   ]
 }

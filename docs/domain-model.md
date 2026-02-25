@@ -45,9 +45,7 @@ This document describes the entity-relationship model for TTRPG Long-Term Goals.
 
 ---
 
-## Future Stages (planned, not yet implemented)
-
-### Stage 3 — Campaigns
+## Stage 3 — Campaigns & Members
 
 ```
 ┌──────────────────────────┐
@@ -72,6 +70,17 @@ This document describes the entity-relationship model for TTRPG Long-Term Goals.
 │ PK(campaign_id, user_id) │
 └──────────────────────────┘
 ```
+
+### Relationships
+
+- **campaigns → users (dm)**: Each campaign has one DM (N:1 via `dm_id`)
+- **campaign_members**: Join table linking users to campaigns with a role (M:N)
+- **campaigns → campaign_members**: One campaign has many members (1:N)
+- **users → campaign_members**: One user can be in many campaigns (1:N)
+
+---
+
+## Future Stages (planned, not yet implemented)
 
 ### Stage 5 — Investigation Tracks
 

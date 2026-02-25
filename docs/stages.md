@@ -89,9 +89,9 @@ Remove old investigation tracks. Add new Campaign Tree schema: `campaign_parts`,
 
 ## Stage 5b — Parts/Sessions API
 
-**Status:** Planned
+**Status:** Done
 
-CRUD endpoints for campaign parts and sessions. DM creates/updates/deletes parts and sessions within a campaign.
+CRUD endpoints for campaign parts and sessions. DM creates/updates/deletes parts and sessions within a campaign. GET list is visibility-filtered for players based on the campaign marker.
 
 **Delivers:**
 - `POST /api/campaigns/:id/parts` — Create part

@@ -1,9 +1,15 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc, inArray } from 'drizzle-orm';
 import { db } from '../../db';
-import { campaigns, campaignMembers, users } from '../../db/schema';
+import {
+  campaigns,
+  campaignMembers,
+  campaignParts,
+  campaignSessions,
+  users,
+} from '../../db/schema';
 import { ApiError } from '../../lib/api-error';
 import { requireAuth, type AuthEnv } from '../auth/middleware';
 
@@ -312,5 +318,201 @@ app.post(
     });
   },
 );
+
+// ---------------------------------------------------------------------------
+// POST /api/campaigns/:id/parts — Create part (DM only)
+// ---------------------------------------------------------------------------
+const createPartSchema = z.object({
+  name: z.string().min(1).max(200),
+  sortOrder: z.number().int().min(0),
+});
+
+app.post(
+  '/:id/parts',
+  zValidator('json', createPartSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid part data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const campaignId = c.req.param('id');
+    const { name, sortOrder } = c.req.valid('json');
+
+    // Verify DM
+    const [membership] = await db
+      .select()
+      .from(campaignMembers)
+      .where(
+        and(
+          eq(campaignMembers.campaignId, campaignId),
+          eq(campaignMembers.userId, user.id),
+          eq(campaignMembers.role, 'dm'),
+        ),
+      )
+      .limit(1);
+
+    if (!membership) {
+      throw new ApiError(403, 'NOT_DM', 'Only the DM can create parts');
+    }
+
+    const [part] = await db
+      .insert(campaignParts)
+      .values({
+        campaignId,
+        name,
+        sortOrder,
+        showcaseOwnerId: user.id,
+      })
+      .returning();
+
+    return c.json({ data: part }, 201);
+  },
+);
+
+// ---------------------------------------------------------------------------
+// GET /api/campaigns/:id/parts — List parts with sessions (visibility-filtered)
+// ---------------------------------------------------------------------------
+app.get('/:id/parts', async (c) => {
+  const user = c.get('user');
+  const campaignId = c.req.param('id');
+
+  // Verify membership
+  const [membership] = await db
+    .select()
+    .from(campaignMembers)
+    .where(
+      and(
+        eq(campaignMembers.campaignId, campaignId),
+        eq(campaignMembers.userId, user.id),
+      ),
+    )
+    .limit(1);
+
+  if (!membership) {
+    throw new ApiError(
+      404,
+      'CAMPAIGN_NOT_FOUND',
+      'Campaign not found or you are not a member',
+    );
+  }
+
+  const isDm = membership.role === 'dm';
+
+  // Fetch all parts ordered
+  const parts = await db
+    .select()
+    .from(campaignParts)
+    .where(eq(campaignParts.campaignId, campaignId))
+    .orderBy(asc(campaignParts.sortOrder));
+
+  if (parts.length === 0) {
+    return c.json({ data: [] });
+  }
+
+  // Fetch all sessions for these parts
+  const partIds = parts.map((p) => p.id);
+  const allSessions = await db
+    .select()
+    .from(campaignSessions)
+    .where(inArray(campaignSessions.partId, partIds))
+    .orderBy(asc(campaignSessions.sortOrder));
+
+  // Build map: partId → sessions
+  const sessionsByPart = new Map<string, (typeof allSessions)[number][]>();
+  for (const s of allSessions) {
+    const list = sessionsByPart.get(s.partId) ?? [];
+    list.push(s);
+    sessionsByPart.set(s.partId, list);
+  }
+
+  // For players, compute visibility based on marker
+  let visibleIds: Set<string> | null = null;
+  if (!isDm) {
+    visibleIds = await getVisibleSessionIds(campaignId);
+  }
+
+  // Assemble response — filter sessions and omit empty parts for players
+  const data = parts
+    .map((part) => {
+      const sessions = sessionsByPart.get(part.id) ?? [];
+      const filteredSessions =
+        visibleIds === null
+          ? sessions
+          : sessions.filter((s) => visibleIds.has(s.id));
+
+      return {
+        ...part,
+        sessions: filteredSessions,
+      };
+    })
+    .filter((part) => {
+      // DMs see all parts. Players only see parts with at least one visible session.
+      if (isDm) return true;
+      return part.sessions.length > 0;
+    });
+
+  return c.json({ data });
+});
+
+// ---------------------------------------------------------------------------
+// Visibility helper — determines which session IDs are visible to a player
+// ---------------------------------------------------------------------------
+async function getVisibleSessionIds(campaignId: string) {
+  const [campaign] = await db
+    .select({
+      markerSessionId: campaigns.markerSessionId,
+      markerBetween: campaigns.markerBetween,
+    })
+    .from(campaigns)
+    .where(eq(campaigns.id, campaignId))
+    .limit(1);
+
+  if (!campaign) return new Set<string>();
+
+  // No marker → preparation mode, players see nothing
+  if (!campaign.markerSessionId) return new Set<string>();
+
+  // Get all sessions ordered globally (part sortOrder, then session sortOrder)
+  const allSessions = await db
+    .select({
+      sessionId: campaignSessions.id,
+      partSort: campaignParts.sortOrder,
+      sessionSort: campaignSessions.sortOrder,
+    })
+    .from(campaignSessions)
+    .innerJoin(campaignParts, eq(campaignSessions.partId, campaignParts.id))
+    .where(eq(campaignParts.campaignId, campaignId))
+    .orderBy(asc(campaignParts.sortOrder), asc(campaignSessions.sortOrder));
+
+  // Find the marker index
+  const markerIdx = allSessions.findIndex(
+    (s) => s.sessionId === campaign.markerSessionId,
+  );
+  if (markerIdx === -1) return new Set<string>();
+
+  // Sessions at or before the marker are visible
+  const visible = new Set<string>();
+  for (let i = 0; i <= markerIdx; i++) {
+    visible.add(allSessions[i].sessionId);
+  }
+
+  // If marker is "between", the next session (upcoming) is also visible
+  if (campaign.markerBetween && markerIdx + 1 < allSessions.length) {
+    visible.add(allSessions[markerIdx + 1].sessionId);
+  }
+
+  return visible;
+}
 
 export default app;

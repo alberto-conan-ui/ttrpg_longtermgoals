@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { hash } from '@node-rs/argon2';
 import { users, campaigns, campaignMembers } from './schema';
 import { sql, eq } from 'drizzle-orm';
 
@@ -13,55 +14,18 @@ if (!DATABASE_URL) {
 const client = postgres(DATABASE_URL);
 const db = drizzle(client);
 
-const seedUsers = [
-  {
-    email: 'dm-alice@test.local',
-    username: 'dm_alice',
-    displayName: 'Alice the DM',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'dm-bob@test.local',
-    username: 'dm_bob',
-    displayName: 'Bob the DM',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'dm-carol@test.local',
-    username: 'dm_carol',
-    displayName: 'Carol the DM',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'player-dave@test.local',
-    username: 'player_dave',
-    displayName: 'Dave the Player',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'player-eve@test.local',
-    username: 'player_eve',
-    displayName: 'Eve the Player',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'player-frank@test.local',
-    username: 'player_frank',
-    displayName: 'Frank the Player',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'player-grace@test.local',
-    username: 'player_grace',
-    displayName: 'Grace the Player',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
-  {
-    email: 'player-hank@test.local',
-    username: 'player_hank',
-    displayName: 'Hank the Player',
-    hashedPassword: 'seed-not-a-real-hash',
-  },
+const SEED_PASSWORD = '1234567890';
+
+const seedUserDefs = [
+  { username: 'DM1', email: 'dm1@test.local', displayName: 'DM1' },
+  { username: 'DM2', email: 'dm2@test.local', displayName: 'DM2' },
+  { username: 'DM3', email: 'dm3@test.local', displayName: 'DM3' },
+  { username: 'DM4', email: 'dm4@test.local', displayName: 'DM4' },
+  { username: 'player1', email: 'player1@test.local', displayName: 'Player 1' },
+  { username: 'player2', email: 'player2@test.local', displayName: 'Player 2' },
+  { username: 'player3', email: 'player3@test.local', displayName: 'Player 3' },
+  { username: 'player4', email: 'player4@test.local', displayName: 'Player 4' },
+  { username: 'player5', email: 'player5@test.local', displayName: 'Player 5' },
 ];
 
 async function getUserIdByEmail(email: string): Promise<string> {
@@ -78,49 +42,52 @@ const seedCampaigns = [
     name: 'Curse of Strahd',
     description:
       'A gothic horror adventure set in the mist-shrouded land of Barovia.',
-    dmEmail: 'dm-alice@test.local',
+    dmEmail: 'dm1@test.local',
     playerEmails: [
-      'player-dave@test.local',
-      'player-eve@test.local',
-      'player-frank@test.local',
+      'player1@test.local',
+      'player2@test.local',
+      'player3@test.local',
     ],
   },
   {
     name: 'Tomb of Annihilation',
     description:
       'A death-defying adventure through the jungles of Chult to stop the Soulmonger.',
-    dmEmail: 'dm-bob@test.local',
+    dmEmail: 'dm2@test.local',
     playerEmails: [
-      'player-grace@test.local',
-      'player-hank@test.local',
-      'player-dave@test.local',
+      'player4@test.local',
+      'player5@test.local',
+      'player1@test.local',
     ],
   },
   {
     name: 'Waterdeep Dragon Heist',
     description: 'Urban intrigue in the City of Splendors.',
-    dmEmail: 'dm-alice@test.local',
-    playerEmails: ['player-eve@test.local', 'player-hank@test.local'],
+    dmEmail: 'dm1@test.local',
+    playerEmails: ['player2@test.local', 'player5@test.local'],
   },
 ];
 
 async function seed() {
   console.log('Seeding database...');
+  console.log('  Hashing seed password...');
+  const hashedPassword = await hash(SEED_PASSWORD);
 
   // --- Users ---
-  for (const user of seedUsers) {
+  for (const u of seedUserDefs) {
     await db
       .insert(users)
-      .values(user)
+      .values({ ...u, hashedPassword })
       .onConflictDoUpdate({
         target: users.email,
         set: {
           displayName: sql`excluded.display_name`,
           username: sql`excluded.username`,
+          hashedPassword: sql`excluded.hashed_password`,
           updatedAt: sql`now()`,
         },
       });
-    console.log(`  Upserted user: ${user.displayName} (${user.email})`);
+    console.log(`  Upserted user: ${u.username} (${u.email})`);
   }
 
   // --- Campaigns ---
@@ -168,6 +135,9 @@ async function seed() {
   }
 
   console.log('Seed complete.');
+  console.log('\n  Login credentials (all users): password = 1234567890');
+  console.log('  DMs: DM1, DM2, DM3, DM4');
+  console.log('  Players: player1, player2, player3, player4, player5\n');
   await client.end();
 }
 

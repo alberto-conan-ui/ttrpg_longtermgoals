@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLogin, useAuthProviders } from '../hooks/use-auth';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -8,16 +8,25 @@ export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
-  const { data: providers } = useAuthProviders();
+  const { data: providers, isLoading: providersLoading } = useAuthProviders();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login.mutate({ username, password });
+    login.mutate(
+      { username, password },
+      {
+        onSuccess: () => {
+          navigate({ to: '/campaigns' });
+        },
+      },
+    );
   };
 
-  const hasLocal = providers?.includes('local');
-  const hasGoogle = providers?.includes('google');
-  const hasDiscord = providers?.includes('discord');
+  // Show local form by default while providers load to avoid blank page
+  const hasLocal = providersLoading || providers?.includes('local');
+  const hasGoogle = !providersLoading && providers?.includes('google');
+  const hasDiscord = !providersLoading && providers?.includes('discord');
 
   return (
     <div className="flex min-h-screen items-center justify-center">

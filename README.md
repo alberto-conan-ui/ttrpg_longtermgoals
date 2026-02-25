@@ -1,96 +1,118 @@
-# TtrpgLongtermgoals
+# TTRPG Long-Term Goals
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A campaign management tool for tabletop RPG Dungeon Masters, focused on **between-session downtime**. DMs create campaigns, invite players, and define investigation tracks that players can pursue during idle time between sessions.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Concept
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+In many TTRPG campaigns, time passes between sessions. During this "downtime," players can investigate leads, research lore, or pursue personal goals. This app gives DMs a structured way to:
 
-## Run tasks
+- Define **investigation tracks** with progress milestones
+- Let players allocate idle time to tracks between sessions
+- Track progress per player per track
+- Manage **downtime phases** (open, allocate, resolve, close)
 
-To run tasks with Nx use:
+## Architecture
 
-```sh
-npx nx <target> <project-name>
+```
+ttrpg-longtermgoals/
+├── apps/
+│   ├── api/          # Hono REST API (Node.js + esbuild)
+│   └── web/          # React 19 SPA (Vite)
+├── libs/
+│   └── shared/       # Shared types, schemas, contracts
+├── docs/             # ADRs, domain model, API routes, roadmap
+└── docker-compose.yml
 ```
 
-For example:
+The monorepo is managed by **Nx** with **pnpm** as the package manager.
 
-```sh
-npx nx build myproject
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Monorepo** | Nx 22.5 + pnpm |
+| **API** | Hono + @hono/node-server + esbuild |
+| **Web** | React 19 + Vite 7 |
+| **Database** | PostgreSQL 16 (Docker Compose) |
+| **ORM** | Drizzle ORM + drizzle-kit |
+| **Auth** | Lucia v3 + Arctic (Google, Discord) + local (test env) |
+| **Frontend routing** | TanStack Router |
+| **Server state** | TanStack Query |
+| **UI** | TailwindCSS v4 + shadcn/ui + Lucide icons |
+| **Validation** | Zod |
+| **Testing** | Vitest + Testing Library |
+| **Code quality** | ESLint 9 (flat config) + Prettier |
+
+For rationale behind these choices, see [docs/adr/001-tech-stack.md](docs/adr/001-tech-stack.md).
+
+## Prerequisites
+
+- **Node.js** >= 20
+- **pnpm** >= 9
+- **Docker** & Docker Compose (for PostgreSQL)
+
+## Getting Started
+
+```bash
+# 1. Clone and install dependencies
+pnpm install
+
+# 2. Start PostgreSQL
+docker compose up -d
+
+# 3. Copy environment variables and configure
+cp .env.example .env
+# Edit .env with your values (see Environment Variables below)
+
+# 4. Run database migrations
+pnpm db:migrate
+
+# 5. Seed the database with test data
+pnpm db:seed
+
+# 6. Start the dev servers (API + Web)
+pnpm dev
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+The API runs on `http://localhost:3000` and the web app on `http://localhost:4200`.
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Available Scripts
 
-## Add new projects
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start API + Web dev servers in parallel |
+| `pnpm dev:api` | Start API dev server only |
+| `pnpm dev:web` | Start Web dev server only |
+| `pnpm build` | Build all projects |
+| `pnpm test` | Run all tests |
+| `pnpm lint` | Lint all projects |
+| `pnpm db:generate` | Generate a new Drizzle migration from schema changes |
+| `pnpm db:migrate` | Apply pending database migrations |
+| `pnpm db:seed` | Seed the database with test data (idempotent) |
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+## Environment Variables
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
+All required variables are documented in [`.env.example`](.env.example). Key variables:
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `DISCORD_CLIENT_ID` | Discord OAuth client ID |
+| `DISCORD_CLIENT_SECRET` | Discord OAuth client secret |
+| `SESSION_SECRET` | Secret for signing session cookies |
+| `NODE_ENV` | `development`, `test`, or `production` |
+| `ENABLE_LOCAL_AUTH` | Enable username/password auth (auto-enabled in non-production) |
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+## Documentation
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
+- [SKILLS.md](SKILLS.md) — Coding standards and patterns
+- [docs/stages.md](docs/stages.md) — Development roadmap
+- [docs/adr/](docs/adr/) — Architecture Decision Records
+- [docs/domain-model.md](docs/domain-model.md) — Entity-relationship model
+- [docs/api-routes.md](docs/api-routes.md) — API route index
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## License
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
-```
-
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
-
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+MIT

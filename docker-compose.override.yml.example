@@ -1,0 +1,8 @@
+# Copy this file to docker-compose.override.yml and adjust as needed.
+# docker-compose.override.yml is gitignored.
+#
+# Example: change the host port if 5432 is already in use
+services:
+  postgres:
+    ports:
+      - '5433:5432'

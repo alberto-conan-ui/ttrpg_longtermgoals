@@ -5,7 +5,6 @@ import { env } from './config/env';
 import { errorHandler } from './lib/error-middleware';
 import authRoutes from './features/auth/routes';
 import campaignRoutes from './features/campaigns/routes';
-import trackRoutes from './features/tracks/routes';
 
 const app = new Hono();
 
@@ -29,7 +28,6 @@ app.get('/api/health', (c) => {
 
 app.route('/api/auth', authRoutes);
 app.route('/api/campaigns', campaignRoutes);
-app.route('/api', trackRoutes);
 
 const port = 3000;
 console.log(`Server is running on http://localhost:${port}`);

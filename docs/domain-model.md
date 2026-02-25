@@ -80,74 +80,103 @@ This document describes the entity-relationship model for TTRPG Long-Term Goals.
 
 ---
 
-## Stage 5 — Investigation Tracks
+## Stage 5a — Campaign Tree (Parts, Sessions, Lore Fragments)
+
+### Modified: campaigns (new columns)
+
+```
+┌──────────────────────────────────────┐
+│       campaigns (new columns)        │
+├──────────────────────────────────────┤
+│ + marker_session_id  UUID? FK→       │
+│     campaign_sessions (SET NULL)     │
+│ + marker_between     BOOL DEFAULT F  │
+│ + showcase_json      JSONB?          │
+│ + allow_contributions BOOL DEFAULT F │
+└──────────────────────────────────────┘
+```
+
+### New tables
 
 ```
 ┌──────────────────────────────┐
-│    investigation_tracks      │
+│      campaign_parts          │
+├──────────────────────────────┤
+│ id               UUID PK     │
+│ campaign_id      UUID FK     │
+│ name             TEXT         │
+│ sort_order       INT          │
+│ showcase_json    JSONB?       │
+│ showcase_owner_id UUID FK?   │
+│ allow_contributions BOOL     │
+│ created_at       TIMESTAMPTZ  │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│     campaign_sessions        │
+├──────────────────────────────┤
+│ id               UUID PK     │
+│ part_id          UUID FK     │
+│ name             TEXT         │
+│ status     ENUM(planned,played) │
+│ sort_order       INT          │
+│ showcase_json    JSONB?       │
+│ showcase_owner_id UUID FK?   │
+│ allow_contributions BOOL     │
+│ created_at       TIMESTAMPTZ  │
+└──────────────────────────────┘
+
+┌──────────────────────────────┐
+│      lore_fragments          │
 ├──────────────────────────────┤
 │ id            UUID PK        │
 │ campaign_id   UUID FK        │
-│ name          TEXT            │
-│ description   TEXT?           │
-│ created_at    TIMESTAMPTZ     │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│    track_milestones          │
-├──────────────────────────────┤
-│ id            UUID PK        │
-│ track_id      UUID FK        │
+│ owner_id      UUID FK        │
 │ title         TEXT            │
-│ threshold     INT             │
-│ description   TEXT?           │
+│ content_json  JSONB           │
+│ scope    ENUM(story,private)  │
+│ visibility ENUM(private,     │
+│            shared,public)     │
+│ part_id       UUID? FK       │
+│ session_id    UUID? FK       │
+│ player_id     UUID? FK       │
+│ created_at    TIMESTAMPTZ     │
+│ updated_at    TIMESTAMPTZ     │
 └──────────────────────────────┘
 
 ┌──────────────────────────────┐
-│    player_track_progress     │
+│   lore_fragment_shares       │
 ├──────────────────────────────┤
-│ player_id     UUID FK→users  │
-│ track_id      UUID FK        │
-│ progress      INT DEFAULT 0   │
-│ updated_at    TIMESTAMPTZ     │
-│ PK(player_id, track_id)     │
+│ fragment_id   UUID FK        │
+│ user_id       UUID FK        │
+│ PK(fragment_id, user_id)    │
 └──────────────────────────────┘
 ```
 
 ### Relationships
 
-- **investigation_tracks → campaigns**: Each track belongs to one campaign (N:1)
-- **track_milestones → investigation_tracks**: Each milestone belongs to one track (N:1)
-- **player_track_progress**: Join table linking players to tracks with progress (M:N)
-- DM updates player progress via `POST /api/tracks/:id/progress` (upsert)
+- **campaign_parts → campaigns**: Each part belongs to one campaign (N:1, CASCADE)
+- **campaign_sessions → campaign_parts**: Each session belongs to one part (N:1, CASCADE)
+- **campaigns.marker_session_id → campaign_sessions**: Marker points to a session (SET NULL)
+- **lore_fragments → campaigns**: Each fragment belongs to one campaign (N:1, CASCADE)
+- **lore_fragments.owner_id → users**: Fragment owner (N:1, CASCADE)
+- **lore_fragments**: Polymorphic attachment via nullable `part_id`, `session_id`, `player_id`
+- **lore_fragment_shares**: Join table for shared visibility (M:N between fragments and users)
+
+### Campaign status (derived)
+
+- **Preparation**: `marker_session_id` is NULL
+- **Playing**: `marker_session_id` is set
+
+### Marker position
+
+- **On a session**: `marker_between = false` — "just played this session"
+- **Between sessions**: `marker_between = true` — downtime/idle phase active
 
 ---
 
 ## Future Stages (planned, not yet implemented)
 
-### Stage 6 — Downtime Phases
+### Stage 6 — Idle Tracks
 
-```
-┌──────────────────────────────┐
-│      downtime_phases         │
-├──────────────────────────────┤
-│ id            UUID PK        │
-│ campaign_id   UUID FK        │
-│ status        ENUM(open,     │
-│               allocating,    │
-│               resolving,     │
-│               closed)        │
-│ opened_at     TIMESTAMPTZ     │
-│ closed_at     TIMESTAMPTZ?    │
-└──────────────────────────────┘
-
-┌──────────────────────────────┐
-│     time_allocations         │
-├──────────────────────────────┤
-│ id            UUID PK        │
-│ phase_id      UUID FK        │
-│ player_id     UUID FK→users  │
-│ track_id      UUID FK        │
-│ hours         INT             │
-└──────────────────────────────┘
-```
+Idle tracks (investigation tracks reborn) will be available during the "between sessions" downtime phase. Depends on the marker and lifecycle from Stage 5b. **Not yet designed.**

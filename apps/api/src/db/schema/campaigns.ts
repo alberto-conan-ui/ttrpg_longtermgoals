@@ -1,7 +1,7 @@
-import { pgTable, text, timestamp, uuid, pgEnum, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, pgEnum, primaryKey, boolean, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users } from './users';
-import { investigationTracks } from './tracks';
+import { campaignParts, campaignSessions } from './parts';
 
 export const campaigns = pgTable('campaigns', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -11,6 +11,13 @@ export const campaigns = pgTable('campaigns', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   inviteCode: text('invite_code').unique(),
+  markerSessionId: uuid('marker_session_id').references(
+    () => campaignSessions.id,
+    { onDelete: 'set null' },
+  ),
+  markerBetween: boolean('marker_between').default(false).notNull(),
+  showcaseJson: jsonb('showcase_json'),
+  allowContributions: boolean('allow_contributions').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -25,7 +32,11 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
     references: [users.id],
   }),
   members: many(campaignMembers),
-  tracks: many(investigationTracks),
+  parts: many(campaignParts),
+  markerSession: one(campaignSessions, {
+    fields: [campaigns.markerSessionId],
+    references: [campaignSessions.id],
+  }),
 }));
 
 export const campaignRoleEnum = pgEnum('campaign_role', ['dm', 'player']);

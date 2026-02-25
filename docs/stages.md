@@ -72,75 +72,92 @@ DMs generate invite codes for campaigns. Players join via invite code from the c
 
 ---
 
-## Stage 5 — Investigation Tracks (Core Feature)
+## Stage 5a — Cleanup & Schema
 
 **Status:** Done
 
-DMs define investigation tracks with milestones within a campaign. DMs update player progress. Track list with progress bars on campaign detail, dedicated track detail page with milestone visualization.
-
-**Suggested prompt:**
-> "Implement investigation tracks: DMs can create investigation tracks within a campaign, each with a name, description, and progress milestones. Players can spend idle time to advance their progress on a track. Show progress per player per track. This is the core feature — let's design the schema carefully."
+Remove old investigation tracks. Add new Campaign Tree schema: `campaign_parts`, `campaign_sessions`, `lore_fragments`, `lore_fragment_shares`. Add marker + showcase columns to `campaigns`. Update seed with sample parts, sessions, marker, and lore for Curse of Strahd.
 
 **Delivers:**
-- Investigation track schema with milestones
-- Progress tracking per player per track
-- DM track management UI
-- Player progress view
+- Migration dropping old tracks tables, creating new tables + enums
+- New Drizzle schema files (`parts.ts`, `lore-fragments.ts`)
+- Updated `campaigns` schema with marker + showcase columns
+- Seed data with parts, sessions, marker position, and lore fragments
+- Updated docs (domain-model, api-routes, stages)
 
 ---
 
-## Stage 6 — Between-Session Workflow
+## Stage 5b — Parts/Sessions API
 
 **Status:** Planned
 
-The full downtime phase lifecycle: open, allocate, resolve, close.
-
-**Suggested prompt:**
-> "Build the between-session flow: DMs open a 'downtime phase' for a campaign, players allocate their idle time across available investigation tracks, DM reviews and resolves progress, then closes the phase. Add notifications or status indicators."
+CRUD endpoints for campaign parts and sessions. DM creates/updates/deletes parts and sessions within a campaign.
 
 **Delivers:**
-- Downtime phase lifecycle (open/allocate/resolve/close)
-- Time allocation system
-- DM review and resolve UI
-- Phase history
+- `POST /api/campaigns/:id/parts` — Create part
+- `GET /api/campaigns/:id/parts` — List parts with sessions (visibility-filtered)
+- `PATCH /api/parts/:id` — Update part
+- `DELETE /api/parts/:id` — Delete part
+- `POST /api/parts/:id/sessions` — Create session
+- `PATCH /api/sessions/:id` — Update session
+- `DELETE /api/sessions/:id` — Delete session
 
 ---
 
-## Stage 7 — Polish & Testing
+## Stage 5b.2 — Marker API
 
 **Status:** Planned
 
-Comprehensive tests, error boundaries, loading/empty states, auth hardening.
-
-**Suggested prompt:**
-> "Add comprehensive tests: API integration tests for all endpoints, component tests for key UI flows, seed data scenarios. Add error boundaries, loading states, and empty states across the frontend. Review and harden auth edge cases."
+Endpoint to move the campaign marker. Business logic: setting marker on a session sets it to `played`, setting between requires session already played, bulk-updates prior sessions.
 
 **Delivers:**
-- Full test suite (API + frontend)
-- Error boundaries and loading states
-- Auth edge case hardening
+- `PATCH /api/campaigns/:id/marker` — Move marker
 
 ---
 
-## Stage 8 — Deployment Prep
+## Stage 5c — Lore Fragments API
 
 **Status:** Planned
 
-Production-ready configuration, security, and deployment docs.
-
-**Suggested prompt:**
-> "Prepare for deployment: production Docker Compose (or cloud config), environment-specific builds, health checks, CORS config, rate limiting, CSP headers. Update README with deployment instructions."
+CRUD + sharing + visibility filtering for lore fragments. Story scope auto-publishes at read time when marker reaches the session.
 
 **Delivers:**
-- Production Docker Compose or cloud config
-- Security headers (CORS, CSP, rate limiting)
-- Deployment documentation
+- Lore fragment CRUD endpoints
+- Sharing endpoints (add/remove shares)
+- Visibility filtering based on scope, marker position, and ownership
+- Query params for filtering by attachment point
+
+---
+
+## Stage 5d — Editors & Showcase Pages
+
+**Status:** Planned
+
+Puck page builder + Tiptap rich text editor. Campaign tree sidebar navigation. Showcase pages for all folder nodes. Lore fragment editor. Marker controls.
+
+**Delivers:**
+- Puck editor with custom components (Heading, RichText, Image, Divider, LoreFragmentEmbed, LinkCard)
+- Tiptap `<RichTextEditor>` and `<RichTextViewer>` components
+- Showcase pages for campaign, parts, sessions, player profiles
+- Campaign tree sidebar with visibility filtering
+- Marker controls ("Mark as played", "Start downtime")
+- Lore fragment editor modal
+
+---
+
+## Stage 6 — Idle Tracks
+
+**Status:** Planned
+
+Idle tracks (investigation tracks reborn) available during the "between sessions" downtime phase. Depends on the marker lifecycle from Stage 5b.
+
+**Not yet designed.**
 
 ---
 
 ## Optional Side Stages (request anytime)
 
-- **Dice roller / random events** — Random outcomes for investigation progress
 - **Real-time updates** — WebSockets or SSE for live session tracking
 - **Campaign notes** — Session log and note-taking for DMs
-- **Player character profiles** — Character sheets linked to campaign membership
+- **Polish & Testing** — Comprehensive tests, error boundaries, loading/empty states
+- **Deployment Prep** — Production config, security headers, deployment docs

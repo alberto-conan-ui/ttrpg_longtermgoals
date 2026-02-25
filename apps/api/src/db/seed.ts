@@ -6,9 +6,9 @@ import {
   users,
   campaigns,
   campaignMembers,
-  investigationTracks,
-  trackMilestones,
-  playerTrackProgress,
+  campaignParts,
+  campaignSessions,
+  loreFragments,
 } from './schema';
 import { sql, eq } from 'drizzle-orm';
 
@@ -141,8 +141,7 @@ async function seed() {
     );
   }
 
-  // --- Investigation Tracks (for first campaign: Curse of Strahd) ---
-  // Find the Curse of Strahd campaign
+  // --- Parts, Sessions, Marker & Lore (for Curse of Strahd) ---
   const [strahd] = await db
     .select()
     .from(campaigns)
@@ -150,86 +149,146 @@ async function seed() {
     .limit(1);
 
   if (strahd) {
-    const existingTracks = await db
+    const existingParts = await db
       .select()
-      .from(investigationTracks)
-      .where(eq(investigationTracks.campaignId, strahd.id))
+      .from(campaignParts)
+      .where(eq(campaignParts.campaignId, strahd.id))
       .limit(1);
 
-    if (existingTracks.length === 0) {
-      // Track 1: The Amber Temple
-      const [track1] = await db
-        .insert(investigationTracks)
-        .values({
-          campaignId: strahd.id,
-          name: 'The Amber Temple',
-          description:
-            'Ancient secrets lie buried in the Amber Temple. Research its location and defenses.',
-        })
-        .returning();
-
-      await db.insert(trackMilestones).values([
-        {
-          trackId: track1.id,
-          title: 'Heard rumors of the temple',
-          threshold: 3,
-          description: 'Locals mention an ancient place of power in the mountains.',
-        },
-        {
-          trackId: track1.id,
-          title: 'Found a map fragment',
-          threshold: 6,
-          description: 'A partial map reveals the general location.',
-        },
-        {
-          trackId: track1.id,
-          title: 'Decoded the wards',
-          threshold: 10,
-          description: 'You understand the magical protections and can bypass them.',
-        },
-      ]);
-
-      // Add some player progress
+    if (existingParts.length === 0) {
+      const dmId = await getUserIdByEmail('dm1@test.local');
       const player1Id = await getUserIdByEmail('player1@test.local');
       const player2Id = await getUserIdByEmail('player2@test.local');
-      await db.insert(playerTrackProgress).values([
-        { playerId: player1Id, trackId: track1.id, progress: 5 },
-        { playerId: player2Id, trackId: track1.id, progress: 2 },
-      ]);
 
-      // Track 2: Strahd's Weakness
-      const [track2] = await db
-        .insert(investigationTracks)
+      // Part 1: Death House
+      const [part1] = await db
+        .insert(campaignParts)
         .values({
           campaignId: strahd.id,
-          name: "Strahd's Weakness",
-          description:
-            'Every vampire lord has a weakness. Discover what can be used against Strahd.',
+          name: 'Part 1: Death House',
+          sortOrder: 1,
+          showcaseOwnerId: dmId,
         })
         .returning();
 
-      await db.insert(trackMilestones).values([
+      // Part 2: Vallaki
+      const [part2] = await db
+        .insert(campaignParts)
+        .values({
+          campaignId: strahd.id,
+          name: 'Part 2: Vallaki',
+          sortOrder: 2,
+          showcaseOwnerId: dmId,
+        })
+        .returning();
+
+      // Sessions for Part 1
+      const [session1] = await db
+        .insert(campaignSessions)
+        .values({
+          partId: part1.id,
+          name: 'Arrival at the Village',
+          status: 'played',
+          sortOrder: 1,
+          showcaseOwnerId: dmId,
+        })
+        .returning();
+
+      const [session2] = await db
+        .insert(campaignSessions)
+        .values({
+          partId: part1.id,
+          name: 'Exploring Death House',
+          status: 'played',
+          sortOrder: 2,
+          showcaseOwnerId: dmId,
+        })
+        .returning();
+
+      // Sessions for Part 2
+      await db.insert(campaignSessions).values([
         {
-          trackId: track2.id,
-          title: 'The Sunsword legend',
-          threshold: 4,
-          description: 'You learn of a legendary weapon that can harm Strahd.',
+          partId: part2.id,
+          name: 'Road to Vallaki',
+          status: 'planned',
+          sortOrder: 1,
+          showcaseOwnerId: dmId,
         },
         {
-          trackId: track2.id,
-          title: 'The Holy Symbol of Ravenkind',
-          threshold: 8,
-          description: 'An ancient holy relic that can turn undead.',
+          partId: part2.id,
+          name: 'The Festival',
+          status: 'planned',
+          sortOrder: 2,
+          showcaseOwnerId: dmId,
         },
       ]);
 
-      await db.insert(playerTrackProgress).values([
-        { playerId: player1Id, trackId: track2.id, progress: 4 },
-      ]);
+      // Set marker: between session 2 and session 3 (downtime active)
+      await db
+        .update(campaigns)
+        .set({
+          markerSessionId: session2.id,
+          markerBetween: true,
+        })
+        .where(eq(campaigns.id, strahd.id));
 
-      console.log('  Created investigation tracks for Curse of Strahd');
+      // Lore fragments — campaign-level
+      await db.insert(loreFragments).values({
+        campaignId: strahd.id,
+        ownerId: dmId,
+        title: 'World Map',
+        contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'A detailed map of Barovia and its surrounding regions.' }] }] },
+        scope: 'story',
+        visibility: 'public',
+      });
+
+      // Lore — session-level (story scope, auto-published)
+      await db.insert(loreFragments).values({
+        campaignId: strahd.id,
+        ownerId: dmId,
+        title: 'Session 1 Recap',
+        contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'The party arrived at the Village of Barovia under a thick, unnatural fog.' }] }] },
+        scope: 'story',
+        visibility: 'public',
+        sessionId: session1.id,
+      });
+
+      // Lore — session-level (private scope, shared with player1)
+      await db.insert(loreFragments).values({
+        campaignId: strahd.id,
+        ownerId: player2Id,
+        title: 'My notes on Rose',
+        contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Rose seemed to know more than she let on about the house.' }] }] },
+        scope: 'private',
+        visibility: 'shared',
+        sessionId: session1.id,
+      });
+
+      // Lore — DM private notes
+      await db.insert(loreFragments).values({
+        campaignId: strahd.id,
+        ownerId: dmId,
+        title: 'DM prep notes',
+        contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Remember to introduce Strahd in a dramatic fashion during session 3.' }] }] },
+        scope: 'private',
+        visibility: 'private',
+        sessionId: session2.id,
+      });
+
+      // Lore — player profile (player1 backstory)
+      await db.insert(loreFragments).values({
+        campaignId: strahd.id,
+        ownerId: player1Id,
+        title: 'Backstory',
+        contentJson: { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Ireena grew up in the village, unaware of the dark curse that binds Barovia.' }] }] },
+        scope: 'private',
+        visibility: 'public',
+        playerId: player1Id,
+      });
+
+      console.log('  Created parts, sessions, marker & lore for Curse of Strahd');
     } else {
-      console.log('  Investigation tracks already exist (skipped)');
+      console.log('  Parts/sessions already exist (skipped)');
     }
   }
 

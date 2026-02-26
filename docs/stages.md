@@ -1,8 +1,18 @@
 # Development Roadmap
 
-This document tracks the planned development stages for TTRPG Long-Term Goals. Each stage is designed to be completed in a single focused session.
+This document tracks the development of TTRPG Long-Term Goals.
+
+**Phase 1 (POC)** built the foundational backend and basic UI in vertical slices — schema first, then API, then frontend. This established the technical foundation.
+
+**Phase 2 (current)** is specification and use case definition. We're writing the full product spec (`docs/SPEC.md`) and validating it through user walkthroughs. Each walkthrough tests the spec against a real scenario and refines it where gaps are found.
+
+**Phase 3 (next)** will rebuild the app in horizontal E2E layers. Each layer delivers a thin, working slice of the full experience — a user can perform a complete flow end-to-end. Layers build on each other until the full app is complete. The use cases from Phase 2 become the acceptance criteria for Phase 3 layers. **Every use case must include an automated test suite that proves the flow works. A use case is not complete until its tests pass.**
 
 ---
+
+# Phase 1 — POC Foundation
+
+> *Historical record of the proof-of-concept stages. These established the codebase and technical patterns. Some of this work will be reworked or replaced as the spec evolves (e.g., Parts → Folders, Showcase Pages → removed, Lore Fragments → type system rework).*
 
 ## Stage 1 — Infrastructure & Documentation
 
@@ -131,33 +141,36 @@ CRUD + sharing + visibility filtering for lore fragments. Story scope auto-publi
 
 ## Stage 5d — Editors & Showcase Pages
 
-**Status:** Planned
+**Status:** Superseded
 
-Puck page builder + Tiptap rich text editor. Campaign tree sidebar navigation. Showcase pages for all folder nodes. Lore fragment editor. Marker controls.
-
-**Delivers:**
-- Puck editor with custom components (Heading, RichText, Image, Divider, LoreFragmentEmbed, LinkCard)
-- Tiptap `<RichTextEditor>` and `<RichTextViewer>` components
-- Showcase pages for campaign, parts, sessions, player profiles
-- Campaign tree sidebar with visibility filtering
-- Marker controls ("Mark as played", "Start downtime")
-- Lore fragment editor modal
+> *This stage was planned but never started. The spec (v0.8) removed Showcase Pages and the Puck editor entirely. Lore Fragments with rich text are now the only content surface. This stage will be replaced by Phase 3 layers.*
 
 ---
 
 ## Stage 6 — Idle Tracks
 
-**Status:** Planned
+**Status:** Superseded
 
-Idle tracks (investigation tracks reborn) available during the "between sessions" downtime phase. Depends on the marker lifecycle from Stage 5b.
-
-**Not yet designed.**
+> *Not yet designed at the POC stage. Now fully specified in SPEC.md §3.4. Will be implemented as a Phase 3 layer.*
 
 ---
 
-## Optional Side Stages (request anytime)
+# Phase 2 — Specification & Use Cases
 
-- **Real-time updates** — WebSockets or SSE for live session tracking
-- **Campaign notes** — Session log and note-taking for DMs
-- **Polish & Testing** — Comprehensive tests, error boundaries, loading/empty states
-- **Deployment Prep** — Production config, security headers, deployment docs
+> *Current phase. We are writing the product spec and validating it by walking through real user scenarios. Each use case tests the spec against a concrete flow, and the spec is updated when gaps are found. When complete, these use cases become the acceptance criteria for Phase 3.*
+
+**Spec:** `docs/SPEC.md` (currently v0.8)
+**Journal:** `docs/JOURNAL.md`
+
+| # | Use Case | Status | File |
+|---|----------|--------|------|
+| UC-001 | DM Onboarding & First Session | In progress | [`docs/use-cases/UC-001-dm-onboarding.md`](use-cases/UC-001-dm-onboarding.md) |
+| UC-002 | *(to be defined)* | — | — |
+
+---
+
+# Phase 3 — E2E Layers
+
+> *Not yet started. Each layer is a horizontal slice of the full app that delivers a working end-to-end experience. Layers build on each other. Use cases from Phase 2 define the acceptance criteria.*
+
+*(Layers will be defined once Phase 2 use cases are complete and the spec is stable.)*

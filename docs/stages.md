@@ -159,13 +159,15 @@ CRUD + sharing + visibility filtering for lore fragments. Story scope auto-publi
 
 > *Current phase. We are writing the product spec and validating it by walking through real user scenarios. Each use case tests the spec against a concrete flow, and the spec is updated when gaps are found. When complete, these use cases become the acceptance criteria for Phase 3.*
 
-**Spec:** `docs/SPEC.md` (currently v0.8)
+**Spec:** `docs/SPEC.md` (currently v0.10)
 **Journal:** `docs/JOURNAL.md`
 
 | # | Use Case | Status | File |
 |---|----------|--------|------|
-| UC-001 | DM Onboarding & First Session | In progress | [`docs/use-cases/UC-001-dm-onboarding.md`](use-cases/UC-001-dm-onboarding.md) |
-| UC-002 | *(to be defined)* | — | — |
+| UC-001 | DM Onboarding & First Session Prep | In progress | [`UC-001-dm-onboarding.md`](use-cases/UC-001-dm-onboarding.md) |
+| UC-002 | Inviting Players & Player Onboarding | Draft | [`UC-002-inviting-players.md`](use-cases/UC-002-inviting-players.md) |
+| UC-003 | DM Sets Up Campaign Entities (Plots, NPCs, Locations) | Draft | [`UC-003-campaign-entities.md`](use-cases/UC-003-campaign-entities.md) |
+| UC-004 | *(to be defined — likely: DM activates campaign, runs first session)* | — | — |
 
 ---
 

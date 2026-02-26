@@ -10,7 +10,7 @@
 
 **Phase:** Specification
 **Last session:** 2026-02-26
-**State:** Spec v0.8 drafted. Added Campaign Entities, @Mentions, TODOs, Inbox (v0.7). Then refined structure: Parts replaced by optional Folders with DM-chosen labels, sessions gain explicit statuses (Planning/Planned/Played), auto-created fragments renamed to Session Notes and Session Summary (v0.8).
+**State:** Spec v0.12 drafted. Unified Lore Node model (Aggregation, Anchor, Fragment). @Mentions auto-create Anchors, References show full paragraphs, TODOs deferred. Use cases being built against Lost Mine of Phandelver — UC-001, UC-002, UC-003 drafted.
 
 ## Next Actions
 
@@ -61,6 +61,20 @@
 | 30 | 2026-02-26 | Auto-created fragments renamed: Session Notes + Session Summary | "Prep" → "Session Notes" (more natural, useful beyond just prep). "Public Session Information" → "Session Summary" (clearer for players). |
 | 31 | 2026-02-26 | Three-phase development model: POC → Spec/Use Cases → E2E Layers | POC is done (stages 1–5c). Currently in Phase 2: spec + use case walkthroughs. Phase 3 will build horizontal E2E layers using use cases as acceptance criteria. |
 | 32 | 2026-02-26 | Use case walkthroughs validate and refine the spec | Each walkthrough tests the spec against a real scenario. Gaps found → spec updated. Use cases become Phase 3 acceptance criteria. |
+| 33 | 2026-02-26 | Campaign has explicit status: Prep → Active → Paused → Completed | Prep = no marker, DM setting up. Active = marker exists, campaign running. Paused = frozen, DM can prep. Completed = read-only archive. |
+| 34 | 2026-02-26 | Requests are a general-purpose DM → player nudge system | DM creates a request (description + target + optional linked node). Appears in player's Inbox. Player marks as completed. Lightweight and flexible. |
+| 35 | 2026-02-26 | Use cases built against Lost Mine of Phandelver | Concrete, well-known campaign makes walkthroughs vivid and testable. |
+| 36 | 2026-02-26 | Player Slots replace invite codes | DM creates slots in the campaign tree under Players node. Each slot gets a unique invite link. DM can pre-seed Lore Fragments and check "Require backstory." |
+| 37 | 2026-02-26 | Per-slot invites, not per-campaign | Each player gets a personalised invite link. DM controls who fills which slot and can pre-write character-specific content before the player joins. |
+| 38 | 2026-02-27 | Unified Lore Node model: Aggregation, Anchor, Fragment | Everything in the campaign tree is a Lore Node. Three kinds: Aggregation (pure grouping — folders, container nodes), Anchor (named @mentionable things — sessions, NPCs, plots, locations), Fragment (written content — the only place rich text lives). Eliminates the implicit "third node type" problem where entities were neither folders nor fragments. |
+| 39 | 2026-02-27 | "Lore Fragment" narrowed to "Fragment" | The term "Fragment" now specifically means content-bearing Lore Nodes (kind=fragment). The umbrella term is "Lore Node." Anchors are named things; Fragments are written things. |
+| 40 | 2026-02-27 | Folders are Aggregation Lore Nodes | No special "folder" type — folders are Lore Nodes with kind=aggregation. Root-level containers (Players, Plots, NPCs, Locations, Idle Goals, Events) are also Aggregations. |
+| 41 | 2026-02-27 | @Mentions auto-create Anchors | When a user @mentions a name that doesn't exist, the system auto-creates a minimal Anchor of the appropriate type. No forward reference problem — entities spring into existence when first referenced. DM fills in details later (or never). |
+| 42 | 2026-02-27 | References show full paragraphs | When viewing an Anchor page, the References section shows the full paragraph from each source where the Anchor was @mentioned, plus origin info. This makes the Anchor page a self-assembling dossier — the DM sees everything the campaign knows about an entity just from references. |
+| 43 | 2026-02-27 | TODOs deferred — References are enough | The TODO processing queue (Ignore/Create) is overkill for the current model. @mention References with full-paragraph context provide the cross-referencing value without requiring the DM to process a queue. TODOs may be added later if curated content on entity pages proves necessary. |
+| 44 | 2026-02-27 | References are computed, not stored | References are not a property of the Anchor. They are a computed view — the system queries all Fragments containing @mentions pointing at an Anchor and assembles them on the fly. Source of truth is always the @mention links in Fragments. |
+| 45 | 2026-02-27 | References appear at the bottom of every Anchor page | Regardless of which child Fragment the user is viewing (Public Info, Private Notes, etc.), the References section is always visible at the bottom. They belong to the Anchor, not to any individual Fragment. |
+| 46 | 2026-02-27 | References grouped by source Anchor | Format: `[TYPE] Anchor Name (visibility)` as group header, then `Fragment Name →` paragraph. Multiple references from the same source Anchor are clustered together for easy scanning. |
 
 ---
 
@@ -70,7 +84,7 @@
 
 This is a collaborative campaign companion for tabletop RPG groups. Both DMs and players use it. The DM tracks campaign structure (parts, sessions) and controls story pacing via a marker system that determines what players can see.
 
-**Lore Fragments** are the universal content unit — everything is a lore fragment with a type, visibility, and edit permissions. The type system (Story/Public, Story/Private, Event, Mechanics) drives default behavior while keeping visibility and permissions as independent, overridable controls.
+**Lore Nodes** are the universal building block — everything in the campaign tree is a Lore Node. There are three kinds: **Aggregation** (pure grouping — folders, containers), **Anchor** (named things — sessions, NPCs, plots, locations), and **Fragment** (written content — the only place rich text lives). The type system (Story/Public, Story/Private, Event, Mechanics for Fragments; NPC, Plot, Location, Session, etc. for Anchors) drives default behavior while keeping visibility and permissions as independent, overridable controls.
 
 **Idle Goals** give structure to downtime between sessions. The DM offers goals with tracks (rows of labeled boxes), players declare what they want to pursue, and the DM moves tokens. The world doesn't wait — the DM can advance tracks independently.
 
@@ -148,3 +162,34 @@ This is a collaborative campaign companion for tabletop RPG groups. Both DMs and
 - Established three-phase development model: POC (done) → Spec/Use Cases (current) → E2E Layers (next).
 - Reworked `docs/stages.md` to reflect all three phases. POC stages preserved as history. Use Case 1 (DM onboarding) captured.
 - Use cases serve dual purpose: they validate the spec now and become acceptance criteria for implementation later.
+
+### Session 3 — 2026-02-27
+
+**Context:** Continued from Session 2 (context compacted). Working on UC-003 and data model refinements.
+
+**What happened:**
+- UC-003 (Campaign Entities with @Mentions) was reviewed — user confirmed heavy @mention usage throughout.
+- User questioned the data model: "NPCs are Lore Fragments, but they are of type NPC, correct?" This surfaced a fundamental problem — the spec had an implicit third node type (entities were neither folders nor fragments).
+- Through discussion, unified the entire data model into a single concept: **Lore Node**.
+- Three kinds of Lore Node: **Aggregation** (pure grouping), **Anchor** (named, @mentionable things), **Fragment** (written content).
+- "Lore Fragment" narrowed to just "Fragment" — now specifically means the content-bearing nodes.
+- Folders became Aggregation Lore Nodes rather than a separate concept.
+- Spec updated to v0.11 with unified terminology throughout all sections.
+- @Mentions now auto-create Anchors when referencing a name that doesn't exist. No forward reference problem.
+- References defined as computed views (not stored data), showing full paragraphs, grouped by source Anchor, always at the bottom of every Anchor page.
+- TODOs deferred — References provide enough cross-referencing value without a processing queue.
+- UC-003 fully rewritten with: auto-creation flow, new reference format (`[TYPE] Name (visibility)` grouped headers), and DM verification walkthrough (clicking through Gundren, Klarg, Cragmaw Hideout, Lost Mine plot, and Nezznar to verify References).
+- Spec updated to v0.12.
+
+**Key design breakthroughs:**
+- The unified Lore Node model eliminates conceptual ambiguity. Before: "What is an NPC? It's not a folder, it's not a fragment..." Now: "It's a Lore Node with kind=anchor and type=NPC." One concept, three kinds, clean.
+- @Mentions auto-create Anchors — no forward reference problem. The DM writes naturally and entities spring into existence.
+- References are computed, not stored — the @mention links in Fragments are the source of truth, References are just a view.
+- References show full paragraphs, grouped by source Anchor, making Anchor pages self-assembling dossiers. An NPC page shows everything the campaign knows about that character without the DM ever writing on the NPC page directly.
+- TODOs deferred — the References system provides the cross-referencing value without a processing queue. Simpler, less overhead for the DM.
+- Open questions #15 (TODO actions) and #19 (forward references) resolved.
+- New open questions surfaced: @mention type picker UX for auto-creation, deletion of Anchors with incoming References, Reference visibility filtering for players.
+
+**What's next:**
+- Build UC-004 (DM activates campaign, places marker, runs first session with players).
+- Continue validating the Lore Node model and References through walkthroughs.

@@ -1,6 +1,6 @@
 # TTRPG Long-Term Goals — Product Specification
 
-> **Status:** DRAFT v0.8 — Folders replace Parts, session statuses, renamed auto-created fragments.
+> **Status:** DRAFT v0.12 — @Mentions auto-create Anchors, References with full paragraphs, TODOs deferred.
 > **Last updated:** 2026-02-26
 
 ---
@@ -16,7 +16,7 @@ Between sessions, the app comes alive: the DM offers Idle Goals for players to p
 - **DM-controlled pacing.** The DM decides what is visible and when. Players never see ahead of where the story has reached.
 - **The world moves.** Downtime isn't dead air. The DM can advance the world independently of player choices, and players can pursue goals between sessions.
 - **Collaborative by default.** The app encourages players to contribute, not just consume.
-- **In-character interaction.** Players comment on Lore Fragments and respond to Events as their characters. The campaign becomes a living, asynchronous conversation.
+- **In-character interaction.** Players comment on Fragments and respond to Events as their characters. The campaign becomes a living, asynchronous conversation.
 - **Low friction.** Writing a lore note, leaving a comment, or declaring a downtime action should be as easy as sending a message.
 - **Transparency.** Every action is attributed. When the DM acts on behalf of a player, it's clearly recorded.
 
@@ -27,7 +27,7 @@ Between sessions, the app comes alive: the DM offers Idle Goals for players to p
 ### Dungeon Master (DM)
 
 - Creates and owns the campaign.
-- Defines the structure: folders and sessions. Folders are optional organisational groups with DM-chosen labels.
+- Defines the structure: Aggregations (folders) and Anchors (sessions, entities). Folders are optional Aggregation nodes with DM-chosen labels.
 - Controls the campaign marker — the "current point" in the story.
 - Can see everything at all times (God view).
 - Can prep content ahead of where the players are.
@@ -35,17 +35,18 @@ Between sessions, the app comes alive: the DM offers Idle Goals for players to p
 - Creates and manages Idle Goals and their tracks.
 - Moves tokens on tracks — in response to player actions or to simulate the world.
 - Triggers Events during downtime to provoke player interaction.
-- Moderates all comments on Lore Fragments.
-- Invites players via invite code.
+- Moderates all comments on Fragments.
+- Creates **player slots** in the campaign tree and generates per-slot invite links (see §3.13).
+- Can pre-seed Fragments on a player slot before the player joins.
 
 ### Player
 
-- Joins a campaign via invite code.
+- Joins a campaign via a per-slot invite link.
 - Can only see content at or before the marker position.
 - Experience is anchored to the current session — "what's happening now" is the default view.
 - Can browse back through all previously revealed content.
-- Can create Lore Fragments and enrich collaborative content (e.g., recap scenes).
-- Comments on Lore Fragments, encouraged to do so in-character.
+- Can create Fragments and enrich collaborative content (e.g., recap scenes).
+- Comments on Fragments, encouraged to do so in-character.
 - Responds to Events during downtime.
 - Declares intent to spend downtime on available Idle Goals.
 - Has a player profile page within the campaign.
@@ -54,83 +55,102 @@ Between sessions, the app comes alive: the DM offers Idle Goals for players to p
 
 ## 3. Core Concepts
 
-### 3.1 Campaign Structure
+### 3.1 Campaign Structure & the Lore Node Model
 
-A campaign is a hierarchical tree. Lore Fragments are part of the tree — they appear inline under the nodes they're attached to.
+A campaign is a hierarchical tree. Every node in the tree is a **Lore Node**. There are three kinds of Lore Node:
+
+- **Aggregation** — pure grouping. No content of its own, exists to organise other nodes. Examples: Folders, the Players container, the Plots root, the Locations root.
+- **Anchor** — a named, @mentionable thing with identity. It can have child nodes. Examples: Sessions, Plots, NPCs, Locations, Player Profiles, Idle Goals, Events. Anchors are the "nouns" of the campaign — the things people reference and talk about.
+- **Fragment** — written content. The actual prose, notes, and data. Examples: Session Notes, Session Summary, scene descriptions, plot statements, NPC info, backstories. Fragments are the only place where rich text content lives.
+
+All three kinds share common properties (visibility, permissions, parent-child relationships) but differ in role. The `kind` field distinguishes them; the `type` field gives the specific flavor within that kind.
 
 ```
-Campaign
-├── Folder: "Act I: Death House" (DM names it — could be Arc, Chapter, Stage, etc.)
-│   ├── Session 1: "Arrival at the Village" [status: Played]
-│   │   ├── Session Notes (Story/Private, auto-created)
-│   │   │   ├── Scene: Planned ambush at the gate
-│   │   │   └── NPC notes: Rose and Thorn
-│   │   ├── Session Summary (Story/Public, auto-created)
+Campaign (Aggregation)
+├── "Act I: Death House" (Aggregation — Folder, DM names it)
+│   ├── Session 1: "Arrival at the Village" (Anchor — Session) [status: Played]
+│   │   ├── Session Notes (Fragment — Story/Private, auto-created)
+│   │   │   ├── Scene: Planned ambush at the gate (Fragment — Story/Private)
+│   │   │   └── NPC notes: Rose and Thorn (Fragment — Story/Private)
+│   │   ├── Session Summary (Fragment — Story/Public, auto-created)
 │   │   │   └── (auto: track changes summary)
-│   │   └── Recap (Story/Public, auto-created when status → Played)
-│   │       ├── Scene: The party enters the village
-│   │       ├── Encounter: Meeting the @Vistani (→ link to NPC entity)
-│   │       └── Discovery: The letter from @Kolyan (→ link to NPC entity)
-│   └── Session 2: "Exploring Death House" [status: Planned]
+│   │   └── Recap (Fragment — Story/Public, auto-created when status → Played)
+│   │       ├── Scene: The party enters the village (Fragment — Story/Public)
+│   │       ├── Encounter: Meeting the @Vistani (Fragment, → link to NPC anchor)
+│   │       └── Discovery: The letter from @Kolyan (Fragment, → link to NPC anchor)
+│   └── Session 2: "Exploring Death House" (Anchor — Session) [status: Planned]
 │       └── ...
-├── Session 3: "Side Quest: The Werewolf Den" [status: Planning]
+├── Session 3: "Side Quest: The Werewolf Den" (Anchor — Session) [status: Planning]
 │   └── (no folder — sessions can live at the campaign root)
-├── Folder: "Act II: Vallaki"
+├── "Act II: Vallaki" (Aggregation — Folder)
 │   └── ...
-├── (Player Profiles)
-│   ├── Player A
-│   │   └── Backstory (Story/Public, written by player)
-│   └── Player B
-│       └── Backstory (Story/Private, written by player)
-├── (Idle Goals)
-│   ├── Faction Reputation: The Silver Hand
-│   │   └── Track description (Mechanics)
-│   └── Research the Ancient Tome
-├── (Events — during downtime)
-│   ├── Event: "The Silver Hand sends an envoy"
+├── Players (Aggregation)
+│   ├── Player A (Anchor — Player Profile, filled slot)
+│   │   ├── Backstory (Fragment — Story/Public, written by player)
+│   │   └── DM's briefing (Fragment — Story/Private, pre-seeded by DM)
+│   ├── Player B (Anchor — Player Profile, filled slot)
+│   │   └── Backstory (Fragment — Story/Private, written by player)
+│   └── [Empty slot] (invite link generated, awaiting player)
+├── Idle Goals (Aggregation)
+│   ├── Faction Reputation: The Silver Hand (Anchor — Idle Goal)
+│   │   └── Track description (Fragment — Mechanics)
+│   └── Research the Ancient Tome (Anchor — Idle Goal)
+├── Events (Aggregation)
+│   ├── "The Silver Hand sends an envoy" (Anchor — Event)
 │   │   ├── [comment] Thorin: "I approach cautiously..."
 │   │   ├── [comment] Elara: "I watch from the shadows..."
-│   │   └── Scene: The negotiation (DM adds based on comments)
-│   └── Event: "Fire in the market district"
+│   │   └── Scene: The negotiation (Fragment, DM adds based on comments)
+│   └── "Fire in the market district" (Anchor — Event)
 │       └── ...
-├── (Entities — Plots)
-│   ├── Plot: "The Strahd Conspiracy" (root plot, Story/Public, from Session 1)
-│   │   ├── Public Statements (Story/Public, auto-created)
+├── Plots (Aggregation)
+│   ├── "The Strahd Conspiracy" (Anchor — Plot, Story/Public, from Session 1)
+│   │   ├── Public Statements (Fragment — Story/Public, auto-created)
 │   │   │   ├── "The party learned of Strahd's curse" ← from Session 1 Recap
 │   │   │   └── "Kolyan's letter mentions a dark lord" ← from Session 1 Recap
-│   │   ├── Private Statements (Story/Private, auto-created)
+│   │   ├── Private Statements (Fragment — Story/Private, auto-created)
 │   │   │   └── "Strahd is aware of the party's arrival" (DM only)
-│   │   └── Subplot: "The Tome of Strahd" (Story/Private, from Session 2)
-│   │       ├── Public Statements ...
-│   │       └── Private Statements ...
-│   └── Plot: "Silver Hand Civil War" (Story/Public, from Session 3)
+│   │   └── "The Tome of Strahd" (Anchor — Plot, Story/Private, from Session 2)
+│   │       ├── Public Statements (Fragment) ...
+│   │       └── Private Statements (Fragment) ...
+│   └── "Silver Hand Civil War" (Anchor — Plot, Story/Public, from Session 3)
 │       └── ...
-├── (Entities — NPCs)
-│   ├── NPC: "Kolyan Indirovich" (Story/Public, from Session 1)
-│   │   ├── Public Info (Story/Public, auto-created)
-│   │   └── Private Notes (Story/Private, auto-created)
-│   └── NPC: "Strahd von Zarovich" (Story/Private, from Session 1)
+├── NPCs (Aggregation)
+│   ├── "Kolyan Indirovich" (Anchor — NPC, Story/Public, from Session 1)
+│   │   ├── Public Info (Fragment — Story/Public, auto-created)
+│   │   └── Private Notes (Fragment — Story/Private, auto-created)
+│   └── "Strahd von Zarovich" (Anchor — NPC, Story/Private, from Session 1)
 │       └── ...
-└── (Entities — Locations)
-    ├── Location: "Village of Barovia" (Story/Public, from Session 1)
-    │   ├── Public Info (Story/Public, auto-created)
-    │   └── Private Notes (Story/Private, auto-created)
-    └── Location: "Death House" (Story/Private, from Session 1)
+└── Locations (Aggregation)
+    ├── "Village of Barovia" (Anchor — Location, Story/Public, from Session 1)
+    │   ├── Public Info (Fragment — Story/Public, auto-created)
+    │   └── Private Notes (Fragment — Story/Private, auto-created)
+    └── "Death House" (Anchor — Location, Story/Private, from Session 1)
         └── ...
 ```
 
-- **Folders** are optional grouping nodes with a DM-chosen label (Arc, Chapter, Stage, or anything else). They exist to organise sessions. Sessions can also live directly under the campaign with no folder.
-- **Sessions** are individual play sessions. They are the atomic unit of progression. Each has a status: Planning, Planned, or Played.
-- **Player profiles** are per-campaign pages for each player/character.
-- **Idle Goals** are pursuits available during downtime, tracked via Idle Tracks.
-- **Entities** are trackable campaign elements — Plots, NPCs, Locations, and custom DM-defined types. They are structural nodes with child Lore Fragments and are @mentionable from anywhere in the campaign.
-- **Lore Fragments** appear throughout the tree. They are the only content surface in the app.
+**Aggregation nodes** are optional grouping containers with a DM-chosen label (Folder, Arc, Chapter, or anything else). The root-level containers for Players, Idle Goals, Events, Plots, NPCs, and Locations are also Aggregations. They exist purely to organise — they have no content or identity of their own.
 
-### 3.2 The Marker
+**Anchor nodes** are named things in the campaign. Sessions, Plots, NPCs, Locations, Player Profiles, Idle Goals, Events, and custom DM-defined entity types are all Anchors. They are @mentionable from anywhere, accumulate backlinks, and can have child Fragments and child Anchors (e.g., subplots under plots, sub-locations under locations).
 
-The marker is the DM's tool for controlling campaign pacing. It represents "where the story currently is."
+**Fragment nodes** are where content lives. Every piece of writing — session notes, recaps, plot statements, NPC descriptions, backstories, scene descriptions — is a Fragment. Fragments are the only place rich text exists. They can nest (scenes under session notes, sub-scenes under scenes, to unlimited depth).
 
-- **Preparation mode:** No marker set. Players see nothing (or a landing page). The DM is still setting up.
+### 3.2 Campaign Status & The Marker
+
+#### Campaign Status
+
+Every campaign has a status that controls its overall state and what players experience.
+
+- **Prep** — The campaign is being set up. The DM is creating structure, writing content, and inviting players. There is no marker. Players who have joined can see their Inbox and Player Profile, but no campaign content. This is the default state when a campaign is created.
+- **Active** — The campaign is running. The marker exists and controls what players see. Players can interact with all visible content.
+- **Paused** — The campaign is on hold. The marker is frozen. Players can still see everything that was previously revealed, but nothing new becomes visible and no new events or idle goals are actionable. The DM can still prep content behind the scenes. Useful for campaigns on hiatus or when the DM needs to reorganise without players seeing changes in real time.
+- **Completed** — The campaign is finished. Everything is frozen and viewable as a historical record. No further editing or interaction. The campaign becomes a read-only archive.
+
+Transitions: Prep → Active (DM places the first marker), Active ↔ Paused (DM toggles), Active → Completed (DM closes the campaign). A completed campaign cannot be reopened.
+
+#### The Marker
+
+The marker is the DM's tool for controlling campaign pacing. It represents "where the story currently is." The marker only exists when the campaign is **Active**.
+
 - **On a session:** The marker is placed on a specific session. That session and everything before it is visible to players.
 - **Between sessions (downtime):** The marker is "between" two sessions. The played session and the upcoming session are both visible. This represents downtime between adventures. Idle Goals become actionable. The DM can trigger Events.
 
@@ -148,13 +168,13 @@ Every session has an explicit status that tracks its lifecycle. This is a DM-sid
 
 The marker does not depend on status — the DM can place the marker on a session regardless of its status (e.g., running a session that's still in "Planning"). Status is for the DM's own organisation and is not visible to players.
 
-### 3.3 Lore Fragments
+### 3.3 Fragments
 
-Lore Fragments are the universal content unit. Everything written in the app is a Lore Fragment — session recaps, character backstories, DM prep notes, track descriptions, scene details, events. They are the building blocks of the campaign and the only way content is created and displayed.
+Fragments are the content-bearing Lore Nodes. Everything written in the app lives in a Fragment — session recaps, character backstories, DM prep notes, track descriptions, scene details, plot statements. They are the only place rich text content exists and the only way written content is created and displayed.
 
 #### Content
 
-Every Lore Fragment is a **rich text document** that supports:
+Every Fragment is a **rich text document** that supports:
 - Headings, bold, italic, lists, links
 - Inline images (via URL)
 - Blockquotes (useful for in-character speech or flavour text)
@@ -163,16 +183,16 @@ There is no separate page builder or layout editor. The rich text editor is the 
 
 #### Properties
 
-Every Lore Fragment has:
+Every Fragment has these properties (some are shared with all Lore Nodes, some are Fragment-specific):
 
 | Property | Description |
 |---|---|
+| **Kind** | Always `fragment`. (Shared with all Lore Nodes — Anchors have `anchor`, Aggregations have `aggregation`.) |
 | **Type** | What kind of content this is. Determines default behavior. See §3.3.1. |
-| **Visibility** | Who can see it: private, shared, or public. Present on every fragment. The type sets the default, but the DM can always override. |
+| **Visibility** | Who can see it: private, shared, or public. Present on every Lore Node. The type sets the default, but the DM can always override. |
 | **Edit permissions** | Who can modify the content. Set by the creator. Defaults vary by type. |
 | **Author** | The user who created the fragment. If created via impersonation, records both the acting user and the "on behalf of" user. |
-| **Parent** | Optional. If set, this fragment is a child of another fragment (not of the session/campaign node). Nesting is unlimited. |
-| **Attachment** | Which campaign node this fragment belongs to (campaign, folder, session, player profile, or entity). For child fragments, this is inherited from the root of their fragment tree. |
+| **Parent** | The parent Lore Node. For top-level Fragments, this is an Anchor or Aggregation. For nested Fragments, this is another Fragment. Nesting is unlimited. |
 
 #### Visibility
 
@@ -180,7 +200,7 @@ Every Lore Fragment has:
 - **Shared** — The author, the DM, and specific named members can see it.
 - **Public** — Everyone in the campaign can see it.
 
-Visibility is always an explicit field on the fragment. The type determines the *default* and any *automatic behavior* (e.g., Story/Public auto-flips from private to public when the marker arrives), but the field is always there and the DM can always override it.
+Visibility is always an explicit field on every Lore Node (not just Fragments — Anchors like NPCs and Plots also have visibility). The type determines the *default* and any *automatic behavior* (e.g., Story/Public auto-flips from private to public when the marker arrives), but the field is always there and the DM can always override it.
 
 #### Edit Permissions
 
@@ -194,10 +214,10 @@ The DM can always change edit permissions on any fragment. When the DM is impers
 
 #### Comments
 
-Every Lore Fragment has a comment thread. Comments are the primary way players interact with campaign content.
+Every Fragment has a comment thread. Comments are the primary way players interact with campaign content.
 
-- Anyone who can see a fragment can read its comments.
-- Anyone who can see a fragment can post a comment.
+- Anyone who can see a Fragment can read its comments.
+- Anyone who can see a Fragment can post a comment.
 - Players are encouraged to comment **in-character**, but this is a social convention, not a system constraint.
 - The DM is the ultimate moderator — the DM can delete or edit any comment.
 - Comments are simple text (not rich text). They include the author and timestamp.
@@ -207,16 +227,16 @@ Comments are particularly important on **Event** fragments, where they are the p
 
 #### Parent-Child Relationships
 
-Lore Fragments can have children. This creates a tree structure within a fragment — for example, a Recap (parent) containing Scenes (children), or an Event (parent) that grows into a series of Scenes based on player responses. A DM might use this to plan branching encounters: a "Fighting the Ogre" scene with "If they win..." and "If they lose..." sub-scenes underneath.
+Fragments can have children. This creates a tree structure within a Fragment — for example, a Recap (parent) containing Scenes (children), or a DM planning branching encounters: a "Fighting the Ogre" scene with "If they win..." and "If they lose..." sub-scenes underneath.
 
-- Any fragment whose type supports children can be a parent.
+- Any Fragment whose type supports children can be a parent.
 - **Nesting is unlimited.** Fragments can be children of children, as deep as needed. A scene can contain sub-scenes, which can contain further sub-scenes.
-- **Children belong to their parent fragment**, not to the session or campaign node directly. The parent fragment is the structural anchor. Children inherit their attachment context (which session/folder/entity they belong to) from the root of their fragment tree.
+- **Children belong to their parent Lore Node.** For top-level Fragments, the parent is an Anchor (e.g., a Session or NPC). For nested Fragments, the parent is another Fragment. Children inherit their context from the root of their node tree.
 - Children have their own type, visibility, and edit permissions independent of the parent.
 
-#### 3.3.1 Types
+#### 3.3.1 Fragment Types
 
-Every Lore Fragment has a **type** that describes what it is. The type sets defaults and determines automatic behavior.
+Every Fragment has a **type** that describes what kind of content it is. The type sets defaults and determines automatic behavior.
 
 | Type | Default Visibility | Default Edit | Auto Behavior | Children | Notifications |
 |---|---|---|---|---|---|
@@ -245,26 +265,26 @@ Default story subtypes (shipped with every campaign, DM can add custom ones per 
 
 #### 3.3.2 Session Lifecycle & Auto-Created Fragments
 
-The system automatically creates Lore Fragments at key moments in a session's lifecycle:
+The system automatically creates Fragment nodes as children of a Session Anchor at key lifecycle moments:
 
-**When a session is created:**
-- **"Session Notes"** — Type: Story/Private. The DM's preparation and note-taking space. Supports children (the DM breaks down planned scenes, encounters, notes). Stays useful during and after play — the DM can jot down notes at any point.
-- **"Session Summary"** — Type: Story/Public. What players will see when the marker arrives. Auto-populated with a summary of Idle Goal track changes since the previous session.
+**When a Session Anchor is created:**
+- **"Session Notes"** — Fragment, type: Story/Private. The DM's preparation and note-taking space. Supports child Fragments (the DM breaks down planned scenes, encounters, notes). Stays useful during and after play — the DM can jot down notes at any point.
+- **"Session Summary"** — Fragment, type: Story/Public. What players will see when the marker arrives. Auto-populated with a summary of Idle Goal track changes since the previous session.
 
 **When a session transitions to Played (marker advances past it, or DM sets manually):**
-- **"Recap"** — Type: Story/Public. Edit permissions: everyone. The collaborative record of what actually happened. The DM adds children (scenes, encounters, etc.), players enrich them.
+- **"Recap"** — Fragment, type: Story/Public. Edit permissions: everyone. The collaborative record of what actually happened. The DM adds child Fragments (scenes, encounters, etc.), players enrich them.
 
 #### 3.3.3 How Content is Displayed
 
-Since Lore Fragments are the only content surface, each node in the campaign tree is displayed as a collection of its visible Lore Fragments:
+Since Fragments are the only content surface, each Anchor and Aggregation in the campaign tree is displayed as a collection of its visible child Fragments:
 
-- **Campaign page:** Campaign-level lore fragments (e.g., world overview, house rules).
-- **Folder page:** Lore fragments attached to the folder (e.g., arc-level overview).
-- **Session page:** The auto-created fragments (Session Notes for DM, Session Summary for players, Recap when played) plus any additional fragments attached to the session.
-- **Player profile page:** Lore fragments attached to that player (backstory, journal entries, etc.).
-- **Entity page:** Auto-created fragments (Public/Private Statements or Info/Notes) plus any additional fragments, plus all backlinks from @mentions.
+- **Campaign page:** Campaign-level Fragments (e.g., world overview, house rules).
+- **Folder (Aggregation) page:** Fragments attached to the folder (e.g., arc-level overview).
+- **Session (Anchor) page:** The auto-created Fragments (Session Notes for DM, Session Summary for players, Recap when played) plus any additional Fragments.
+- **Player Profile (Anchor) page:** Fragments attached to that player (backstory, journal entries, etc.).
+- **Entity (Anchor) page:** Auto-created Fragments (Public/Private Statements or Info/Notes) plus any additional Fragments. Below all Fragment content, a **References** section shows every incoming @mention with full paragraph context (see §3.9). References are computed, not stored — they appear persistently at the bottom of the Anchor page regardless of which Fragment the user is viewing.
 
-The UI renders these as a vertical stream of rich text documents, grouped and labeled by type.
+The UI renders Fragments as a vertical stream of rich text documents, grouped and labeled by type. On Anchor pages, the References section follows the Fragments.
 
 ### 3.4 Idle Goals & Tracks
 
@@ -277,7 +297,7 @@ Idle Goals are the DM's tool for giving structure to downtime. Each goal is repr
 - Each box can have a **description** written by the DM — this is the narrative or mechanical effect of being at that position (e.g., "This faction will attack you on sight" or "You've gained access to their library").
 - Box descriptions can be **visible or hidden** from players. The DM controls what players know about each position.
 - The token starts at a DM-chosen box.
-- The DM can attach a **Mechanics** type Lore Fragment to a goal to provide flavor or rules text.
+- The DM can attach a **Mechanics** type Fragment to a goal to provide flavor or rules text.
 
 #### Availability
 
@@ -309,7 +329,7 @@ Downtime — the period when the marker is "between" sessions — is when the ap
 
 1. **Idle Goals:** Players declare which tracks they want to pursue. The DM processes and moves tokens.
 2. **Events:** The DM creates Event fragments and shares them with players. Players comment in-character. The DM evolves events into scene trees based on responses.
-3. **Lore & Comments:** Players write lore (backstory additions, character journal entries) and comment on existing fragments.
+3. **Lore & Comments:** Players write Fragments (backstory additions, character journal entries) and comment on existing Fragments.
 
 By the time the next session begins, the "Public Session Information" fragment summarizes everything that changed — track movements, event outcomes, new lore — giving the table a shared "previously on..." to start from.
 
@@ -320,7 +340,7 @@ The DM can impersonate any player in the campaign. This is a logical-layer featu
 #### What impersonation enables
 
 - **See what they see.** The DM views the app exactly as that player would — same visibility filters, same campaign tree content, same session-anchored default view. This is essential for verifying that visibility rules are working correctly.
-- **Act on their behalf.** The DM can create lore fragments, post comments, declare downtime intent, and edit content as if they were the player. This is useful for helping less engaged players contribute, or for entering information a player communicated at the table.
+- **Act on their behalf.** The DM can create Fragments, post comments, declare downtime intent, and edit content as if they were the player. This is useful for helping less engaged players contribute, or for entering information a player communicated at the table.
 
 #### How it works
 
@@ -340,9 +360,9 @@ The DM and players experience fundamentally different interfaces tailored to the
 
 #### DM View (God Mode)
 
-- **Sees everything.** All fragments regardless of visibility, all sessions regardless of marker position, all track boxes including hidden descriptions.
-- **Navigates by structure.** The full campaign tree is the primary navigation — folders, sessions, idle goals, entities, player profiles. The DM is managing and authoring.
-- **Management tools.** Marker controls, track token movement, event creation, fragment creation with full type/visibility/permissions controls.
+- **Sees everything.** All Lore Nodes regardless of visibility, all sessions regardless of marker position, all track boxes including hidden descriptions.
+- **Navigates by structure.** The full campaign tree is the primary navigation — Aggregations, Anchors, Fragments. The DM is managing and authoring.
+- **Management tools.** Marker controls, track token movement, event creation, Fragment creation with full type/visibility/permissions controls.
 - **Impersonation dropdown.** Switch to any player's view at any time.
 
 #### Player View (Session-Anchored)
@@ -354,23 +374,25 @@ The DM and players experience fundamentally different interfaces tailored to the
 
 > **NOTE:** The exact layout and navigation patterns for each view will be refined during design. The key principle is that the DM's experience is management-oriented and the player's experience is participation-oriented.
 
-### 3.8 Campaign Entities
+### 3.8 Campaign Entities (Anchor Types)
 
-Campaign Entities are trackable elements of the campaign world — the people, places, storylines, and other things the DM and players want to keep track of over time. They are structural nodes in the campaign tree, sitting at the root level alongside Parts, Player Profiles, Idle Goals, and Events.
+Campaign Entities are the Anchor nodes that represent trackable elements of the campaign world — the people, places, storylines, and other things the DM and players want to keep track of over time. They are Lore Nodes of kind=Anchor, grouped under root-level Aggregation nodes by type (Plots, NPCs, Locations, etc.).
 
-#### The Pattern
+#### The Anchor Pattern
 
-Every entity follows the same shape:
+Every entity Anchor follows the same shape:
 
-- It is a **named node** in the campaign tree, grouped under its entity type.
-- It has **Story/Public or Story/Private visibility**, following the same rules as Lore Fragments. A Story/Public entity becomes visible to players when the marker reaches the session it was activated from. A Story/Private entity is DM-only.
+- It is a **named Anchor node** in the campaign tree, grouped under an Aggregation for its type.
+- It has **Story/Public or Story/Private visibility**, following the same rules as all Lore Nodes. A Story/Public Anchor becomes visible to players when the marker reaches the session it was activated from. A Story/Private Anchor is DM-only.
 - It is **anchored to a session** — the point in the campaign where it was introduced or became relevant.
-- It has **auto-created child Lore Fragments** on creation (the exact fragments depend on the entity type — see below).
-- It can have **additional child Lore Fragments** added manually by the DM or players.
+- It has **auto-created child Fragments** on creation (the exact Fragments depend on the Anchor type — see below).
+- It can have **additional child Fragments** added manually by the DM or players.
 - It is **@mentionable** from any rich text in the campaign (see §3.9).
-- It can **nest** — an entity can be a child of another entity of the same type (e.g., subplot under plot, district under city).
+- It can **nest** — an Anchor can be a child of another Anchor of the same type (e.g., subplot under plot, district under city).
 
-#### Default Entity Types
+Note: Sessions, Player Profiles, Idle Goals, and Events are also Anchors (see §3.1). The "entity" label is a convenience for the DM-created world-building Anchors described below.
+
+#### Default Entity Anchor Types
 
 Three entity types ship with every campaign:
 
@@ -378,73 +400,103 @@ Three entity types ship with every campaign:
 
 The narrative threads of the campaign. The root plot is the main story; subplots branch from it or from each other.
 
-- Auto-created children: **Public Statements** (Story/Public) and **Private Statements** (Story/Private).
+- Auto-created child Fragments: **Public Statements** (Story/Public) and **Private Statements** (Story/Private).
 - Public Statements are things the players know about this plot thread. Private Statements are things only the DM knows.
-- When a TODO from an @mention is processed into a new statement, it is added as content to the appropriate Statements fragment, and it retains a link back to the source (see §3.9, §3.10).
-- Subplots nest under their parent plot.
+- The References section on the Plot page shows every @mention of this plot across the campaign, with full paragraph context — this is how the plot's narrative history builds up organically (see §3.9).
+- Subplots nest under their parent plot (Anchor under Anchor).
 
 **NPCs**
 
 The characters of the campaign world.
 
-- Auto-created children: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
+- Auto-created child Fragments: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
 - Public Info is what the players know about this character. Private Notes are the DM's secrets.
 
 **Locations**
 
 The places in the campaign world.
 
-- Auto-created children: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
-- Locations can nest (e.g., a room inside a building inside a city).
+- Auto-created child Fragments: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
+- Locations can nest (e.g., a room inside a building inside a city — Anchor under Anchor).
 
 #### Custom Entity Types
 
-The DM can create additional entity types for their campaign — Factions, Items, Organisations, Religions, or whatever the campaign needs. Custom types follow the same pattern: named node, visibility, session anchor, auto-created public/private child Lore Fragments, @mentionable, nestable.
+The DM can create additional entity types for their campaign — Factions, Items, Organisations, Religions, or whatever the campaign needs. Custom types follow the same Anchor pattern: named node, visibility, session anchor, auto-created public/private child Fragments, @mentionable, nestable.
 
-The system does not need to understand the semantics of a custom type. It only needs to know it is a node with Lore Fragments that participates in the @mention and TODO systems.
+The system does not need to understand the semantics of a custom type. It only needs to know it is an Anchor with child Fragments that participates in the @mention and cross-referencing systems.
 
 ### 3.9 @Mentions
 
-The @mention system is a universal cross-referencing tool. Anywhere a user is writing rich text in a Lore Fragment, they can type `@` and reference any node in the campaign tree — an Entity (Plot, NPC, Location, or custom), a Session, a Folder, a Player Profile, an Idle Goal, or another Lore Fragment.
+The @mention system is a universal cross-referencing tool. Anywhere a user is writing rich text in a Fragment, they can type `@` and reference any other Lore Node in the campaign tree — any Anchor (Plot, NPC, Location, Session, Player Profile, Idle Goal, Event, or custom), any Aggregation, or another Fragment.
 
 #### What an @mention creates
 
 1. **A visible link in the text.** The `@reference` renders as a clickable link to the target node. Readers can click through to navigate to it.
-2. **A backlink on the target.** The target node records that it was mentioned, including where (which fragment, which session). When viewing the target node, all incoming references are visible — the node becomes a cross-referenced index of everywhere it appears in the campaign.
-3. **A TODO on the target node.** The mention signals "something just pointed at you" and needs to be processed by the node's owner (see §3.10).
+2. **A backlink on the target.** The target node records that it was mentioned, including the full paragraph where the mention appears and which Fragment/session it came from. When viewing the target node, all incoming references are visible with full context — the node becomes a self-assembling dossier of everywhere it appears in the campaign.
+
+#### Auto-creation of Anchors
+
+When a user types `@` and references a name that doesn't yet exist as an Anchor, the system **auto-creates a minimal Anchor** of the appropriate type:
+
+- The new Anchor is created under the correct Aggregation (e.g., an NPC goes under the NPCs Aggregation).
+- It gets the standard auto-created child Fragments (e.g., Public Info + Private Notes for an NPC), both initially empty.
+- Its **session anchor** is set to the session where the @mention occurred.
+- Its **visibility** defaults to Story/Private (the DM can change it later).
+- The @mention link in the source Fragment immediately points to the new Anchor.
+
+This means the DM never needs to pre-create entities. They write naturally — "@Klarg rules the upper cavern" — and Klarg exists as a navigable NPC from that moment. The DM fills in details whenever they choose, or never — the references section on the Anchor page already tells the story.
+
+#### References (computed view)
+
+References are **not stored data on the Anchor**. They are a computed view — the system queries all Fragments in the campaign that contain an @mention pointing at this Anchor and assembles the list on the fly. The source of truth is always the @mention links inside each Fragment.
+
+The **References** section appears at the **bottom of every Anchor page**, regardless of which child Fragment the user is currently viewing. Whether the DM is looking at an NPC's Public Info, Private Notes, or any other child Fragment, the References are always visible beneath the content. They belong to the Anchor, not to any individual Fragment.
+
+Each Reference displays:
+- The **full paragraph** from the source Fragment where the @mention appears
+- The **origin label** in the format: `[TYPE] Anchor Name (visibility) →` followed by the paragraph
+- Clickable @mention links within the paragraph (e.g., other NPCs, Locations mentioned in the same paragraph)
+
+References are **grouped by the source Anchor** they come from. This makes it easy to scan — the DM sees "here's everything the Cragmaw Hideout location says about this NPC" as a cluster, rather than a flat chronological list.
+
+For example, Klarg's NPC page might show:
+
+> **[LOCATION] Cragmaw Hideout (public)**
+>
+> *Public Info →* "A cave along the Triboar Trail. Goblin den."
+>
+> *Private Notes →* "Home to **@Klarg** (bugbear leader), **@Yeemik** (second-in-command), and a dozen goblins. **@Sildar Hallwinter** is held prisoner here. Contains stolen supplies from the **@Lionshield Coster**. A trail from here eventually leads to **@Cragmaw Castle**."
+
+> **[NPC] Yeemik (public)**
+>
+> *Private Notes →* "Goblin second-in-command at **@Cragmaw Hideout**. Hates **@Klarg**. Will betray him if the party offers to help. Holds **@Sildar Hallwinter** prisoner."
+
+> **[PLOT] The Cragmaw Goblins (public)**
+>
+> *Private Statements →* "**@King Grol** leads the tribe from **@Cragmaw Castle**. **@Klarg** commands the outpost at **@Cragmaw Hideout**. They're working for **@Nezznar the Black Spider**."
+
+This makes the Anchor page a self-assembling dossier — the DM can see everything the campaign knows about this entity, grouped by where it came from, without ever writing a line in the entity's own Fragments.
 
 #### Bidirectional links
 
-Links are always bidirectional. From the source, you can navigate to the target. From the target, you can navigate back to every source that references it. For entities like Plots, this means the Plot page naturally accumulates a history of every moment in the campaign where it was relevant — every recap scene, every event, every comment that mentioned it — all linked and traceable.
+Links are always bidirectional. From the source, you can navigate to the target. From the target, you can navigate back to every source that references it, with the full paragraph context shown inline. For entities like Plots, this means the Plot page naturally accumulates a history of every moment in the campaign where it was relevant — every recap scene, every event, every comment that mentioned it — all linked and traceable.
 
 #### Who can @mention
 
-Anyone who can edit a Lore Fragment can add @mentions to it. The DM can @mention anything. Players can @mention any node they can see (respecting visibility rules).
+Anyone who can edit a Fragment can add @mentions to it. The DM can @mention anything. Players can @mention any node they can see (respecting visibility rules).
 
 > **NOTE:** The exact UX for the @mention picker (how the dropdown appears, how users search/filter the tree, how it handles large campaigns) is a design question to be refined.
 
-### 3.10 TODOs
+### 3.10 TODOs (Future — Not in Initial Scope)
 
-Every @mention generates a **TODO** on the target node. TODOs are a lightweight processing queue — they tell the node's owner "something referenced you, decide what to do about it."
+> **Status:** Deferred. The @mention system (§3.9) with auto-creation and bidirectional references provides sufficient cross-referencing without a processing queue. TODOs may be introduced later if the DM needs a way to explicitly process mentions into curated content on entity pages. For now, the References section on each Anchor page serves this purpose organically.
 
-#### Ownership
+If implemented in the future, the TODO system would work as follows:
 
-- The TODO appears for the **owner of the target node**. For entities (Plots, NPCs, etc.), the owner is the DM. For Player Profiles, the owner is the player. For other nodes, ownership follows existing rules.
-- The **DM can always process any TODO**, regardless of ownership — consistent with the DM's God view and impersonation capabilities.
-
-#### Processing actions
-
-When processing a TODO, the owner can:
-
-- **Ignore** — Acknowledge the mention, no further action. The mention link remains, but nothing is added to the target node. Cleared from the queue.
-- **Create a new statement / entry** — The mention is significant enough to become new content on the target node. For Plots, this means adding a new statement to the Public or Private Statements fragment. For NPCs or Locations, adding to their Public Info or Private Notes. The new content retains a provenance link back to the source mention.
-
-> **NOTE:** Additional processing actions may be added later. The system should be designed to support extensible actions.
-
-#### TODO state
-
-- **Pending** — Unprocessed. Appears in the owner's Inbox (see §3.11).
-- **Processed** — The owner took an action (ignore or create). Cleared from the active queue but the @mention link and any created content remain.
+- Every @mention optionally generates a **TODO** on the target node — a lightweight processing queue telling the node's owner "something referenced you, decide what to do about it."
+- **Ownership:** The TODO appears for the owner of the target node. For entities, the owner is the DM. For Player Profiles, the owner is the player. The DM can always process any TODO.
+- **Processing actions:** Ignore (acknowledge and clear) or Create new statement/entry (adds curated content to the target Anchor's Fragments with a provenance link back to the source mention).
+- **State:** Pending (unprocessed) or Processed (action taken).
 
 ### 3.11 Inbox
 
@@ -452,22 +504,78 @@ Every user (DM and players) has an **Inbox** — a consolidated view of everythi
 
 #### What appears in the Inbox
 
-- **Unprocessed TODOs** from @mentions on nodes the user owns.
-- **New comments** on Lore Fragments the user authored or is watching.
+- **Requests** from the DM (see §3.12).
+- **New comments** on Fragments the user authored or is watching.
 - **Events** shared with the user that they haven't responded to.
 - **Idle Goal availability** during downtime — tracks the user can declare intent on.
 - **New content** revealed by a marker advance — a summary of what became visible since the user last checked.
+- **New @mention references** on Anchors the user owns — informational, showing that something new pointed at their entity. (Future: these could become TODOs if a processing queue is added, see §3.10.)
 
 #### Role differences
 
-- **DM Inbox:** All TODOs across all entities, all unprocessed mentions, all pending event responses from players, all comments. The DM's inbox reflects the full state of the campaign.
-- **Player Inbox:** TODOs on their own nodes (player profile), comments on their fragments, events directed at them, idle goals available to them, newly revealed content.
+- **DM Inbox:** All pending event responses from players, all comments, new @mention references across all entities. The DM's inbox reflects the full state of the campaign.
+- **Player Inbox:** Comments on their Fragments, events directed at them, idle goals available to them, newly revealed content, new references on their Player Profile.
 
 #### Design intent
 
 The Inbox answers the question "what do I need to do?" without requiring the user to navigate the campaign tree. For players, it replaces the need to browse — the app tells them what's alive and what's waiting. For the DM, it's a management dashboard that surfaces everything requiring attention.
 
 > **NOTE:** The exact Inbox UI (grouped by type? chronological? filterable?) is a design question to be refined.
+
+### 3.12 Requests
+
+Requests are the DM's tool for proactively asking players to do something. They are intentional — the DM explicitly asks a player to take an action.
+
+#### What a Request contains
+
+- **Description** — What the DM is asking. Free text (e.g., "Please write your character backstory", "Respond to the Silver Hand event", "Review the Session 3 recap and add anything I missed").
+- **Target** — Who the request is for: a specific player, or the whole party.
+- **Node (optional)** — A specific campaign node the request relates to (e.g., the player's Player Profile, a specific Event, a Recap fragment). If set, the request links to that node, making it easy for the player to navigate directly to where they need to act.
+- **Status** — Pending or Completed. The player marks a request as completed when they've done what was asked. The DM can also mark it on their behalf.
+
+#### When Requests are used
+
+Requests are general-purpose. The DM can create them at any time for any reason. Common patterns include:
+
+- **Onboarding:** When a player joins the campaign, the DM sends a request to write their backstory.
+- **Post-session:** The DM asks players to review and enrich the recap.
+- **Downtime:** The DM nudges a player to respond to an event or declare downtime intent.
+- **Preparation:** The DM asks players to read new lore before the next session.
+
+#### How Requests flow
+
+1. DM creates a request, targeting a player (or the whole party).
+2. The request appears in the target player's Inbox.
+3. The player reads the request, navigates to the linked node (if any), and does what's asked.
+4. The player marks the request as completed.
+5. The DM sees the completed status in their own Inbox/dashboard.
+
+Requests are deliberately lightweight — they are a nudge, not a workflow. The DM writes a sentence, the player sees it, acts on it, and marks it done.
+
+### 3.13 Player Slots
+
+Player slots are how the DM invites players to the campaign. They live under the **Players** node in the campaign tree.
+
+#### How slots work
+
+1. The DM opens the Players node in the campaign tree and clicks `+` to create a **player slot**.
+2. When creating the slot, the DM can:
+   - Check **"Require backstory"** — when a player fills this slot, a Request to write their backstory is automatically created in their Inbox, linked to their Player Profile.
+   - **Pre-seed Fragments** on the slot — content the player will see when they join (e.g., "Here's what your character knows about the quest", character-specific briefings, house rules).
+3. Each slot generates a **unique invite link**. The DM shares this link with a specific person.
+4. When a player uses the invite link:
+   - They fill the slot. Their **Player Profile** (an Anchor) is created.
+   - Any pre-seeded Fragments are now attached to their profile.
+   - If "Require backstory" was checked, a Request appears in their Inbox.
+5. The DM can see in the campaign tree which slots are **filled** (player has joined) and which are **empty** (invite sent, waiting).
+
+#### Why per-slot invites
+
+Per-slot invites let the DM personalise the onboarding experience for each player. The DM can pre-write content specific to that character or player before they even join. This is particularly useful for:
+
+- Character-specific briefings ("You know Gundren personally — here's your shared history")
+- Pre-created character stubs that the player then fills in
+- DM notes about what this character's role in the campaign will be (Story/Private, visible only to the DM)
 
 ---
 
@@ -477,11 +585,14 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 
 - OAuth via Google and Discord.
 - Local username/password auth for development.
-- Players join campaigns via an invite code generated by the DM.
+- DM creates player slots in the campaign tree, each with a unique invite link (see §3.13).
+- DM can pre-seed Fragments and check "Require backstory" on each slot.
+- Players join campaigns via a per-slot invite link. Player Profile (Anchor) is created on join, pre-seeded content and Requests are applied automatically.
 
 ### 4.2 Campaign Management (DM)
 
-- Create campaigns with a name and description.
+- Create campaigns with a name and description. Campaign starts in **Prep** status.
+- Transition campaign status: Prep → Active (by placing the first marker), Active ↔ Paused, Active → Completed.
 - Create sessions directly under the campaign or inside folders.
 - Create, name, and nest folders to organise sessions (optional — the DM chooses the label: Arc, Chapter, Stage, etc.).
 - Add/reorder/delete folders and sessions.
@@ -490,23 +601,23 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 - Move the marker to control what players see.
 - Define custom story subtypes for the campaign.
 
-### 4.3 Lore Fragments (DM & Players)
+### 4.3 Fragments (DM & Players)
 
-- Create lore fragments attached to any campaign node.
+- Create Fragments attached to any Anchor or Aggregation node.
 - Rich text editing with inline images.
 - Choose type (which sets sensible defaults for visibility and edit permissions).
 - Override visibility and edit permissions as needed.
-- Add children to fragments that support them.
-- Share fragments with specific campaign members (visibility: shared).
-- Comment on any visible fragment.
-- DM can delete any fragment or comment; edit depends on edit permissions.
-- System auto-creates fragments at session lifecycle events (see §3.3.2).
+- Add child Fragments to Fragments that support them.
+- Share Fragments with specific campaign members (visibility: shared).
+- Comment on any visible Fragment.
+- DM can delete any Fragment or comment; edit depends on edit permissions.
+- System auto-creates Fragments at session lifecycle events (see §3.3.2).
 
 ### 4.4 Idle Goals & Tracks (DM & Players)
 
 **DM capabilities:**
 - Create an Idle Goal with a name and description.
-- Attach a Mechanics lore fragment for flavor/rules text.
+- Attach a Mechanics Fragment for flavor/rules text.
 - Define the track: add, reorder, and label boxes. Write descriptions for each box (visible or hidden).
 - Set the starting position of the token.
 - Assign the goal to a specific player or the whole party.
@@ -527,16 +638,16 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 
 ### 4.5 Events (DM)
 
-- Create Event fragments during downtime.
+- Create Event Anchors during downtime.
 - Share events with the whole party or specific players.
 - System notifies recipients, prompting them to respond.
 - Players respond via comments (in-character encouraged).
-- DM evolves events by adding child Scene fragments based on player responses.
+- DM evolves events by adding child Scene Fragments based on player responses.
 - Event outcomes feed into the session transition summary.
 
 ### 4.6 Comments (Everyone)
 
-- Comment on any visible Lore Fragment.
+- Comment on any visible Fragment.
 - Comments are plain text with author and timestamp.
 - Players encouraged to comment in-character (social convention, not enforced).
 - DM can delete or edit any comment (moderation).
@@ -549,44 +660,49 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 - Act on their behalf (create, edit, comment) with transparent attribution.
 - Switch back to God view at any time.
 
-### 4.8 Campaign Entities (DM & Players)
+### 4.8 Campaign Entities — Anchors (DM & Players)
 
 **DM capabilities:**
-- Create entities of any type (Plot, NPC, Location, or custom).
+- Create entity Anchors of any type (Plot, NPC, Location, or custom).
 - Define custom entity types per campaign.
 - Set visibility (Story/Public or Story/Private) and session anchor.
-- Nest entities under others of the same type (subplots, sub-locations, etc.).
-- Manage auto-created child Lore Fragments (Public/Private Statements or Info/Notes).
-- Add additional Lore Fragments to any entity.
+- Nest Anchors under others of the same type (subplots, sub-locations, etc.).
+- Manage auto-created child Fragments (Public/Private Statements or Info/Notes).
+- Add additional Fragments to any entity Anchor.
 
 **Player capabilities:**
-- View entities visible to them (Story/Public, marker has reached activation session).
-- Read public statements/info on visible entities.
-- @mention visible entities from any Lore Fragment they can edit.
+- View entity Anchors visible to them (Story/Public, marker has reached activation session).
+- Read public statements/info Fragments on visible Anchors.
+- @mention visible Anchors from any Fragment they can edit.
 
 ### 4.9 @Mentions (Everyone)
 
-- Type `@` in any rich text editor to reference any campaign tree node.
+- Type `@` in any Fragment's rich text editor to reference any Lore Node in the campaign tree.
+- If the @mentioned name doesn't exist yet, the system auto-creates a minimal Anchor of the appropriate type (see §3.9).
 - Mentions render as clickable links to the target node.
-- Mentions create backlinks on the target — visible when viewing that node.
+- Mentions create backlinks on the target — the **full paragraph** from the source is shown in the target's References section.
 - All links are bidirectional: source → target and target → source.
-- A TODO is generated on the target node for every new mention (see §4.10).
-- Players can only @mention nodes they can see.
+- Players can only @mention Lore Nodes they can see.
 
-### 4.10 TODOs (DM & Players)
+### 4.10 TODOs (Future — Not in Initial Scope)
 
-- Every @mention creates a pending TODO on the target node.
-- TODOs appear in the node owner's Inbox.
-- Processing actions: **Ignore** (acknowledge and clear) or **Create new statement/entry** (adds content to the target node with a provenance link back to the source mention).
-- The DM can process any TODO in the campaign.
-- Players can process TODOs on nodes they own (e.g., their player profile).
+- Deferred. See §3.10 for future design if needed.
+- The @mention References system (§3.9) provides the cross-referencing value without a processing queue.
 
 ### 4.11 Inbox (Everyone)
 
 - Per-user consolidated view of all pending actions.
-- Aggregates: unprocessed TODOs, new comments, unresponded events, idle goal availability, newly revealed content.
+- Aggregates: requests, new comments, new @mention references, unresponded events, idle goal availability, newly revealed content.
 - Default landing experience for players.
 - DM inbox reflects full campaign state.
+
+### 4.12 Requests (DM)
+
+- DM can create a request for a specific player or the whole party at any time.
+- Request includes a description, a target, and an optional linked campaign node.
+- Requests appear in the target player's Inbox.
+- Player marks a request as completed when done. DM can also mark it on their behalf.
+- DM sees request status (pending/completed) in their Inbox/dashboard.
 
 ---
 
@@ -594,7 +710,7 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 
 | # | Question | Context |
 |---|----------|---------|
-| 1 | What happens to lore on deleted sessions/folders? | Currently cascading deletes. Should lore be preserved or orphaned? |
+| 1 | What happens to child Lore Nodes on deleted Anchors/Aggregations? | Currently cascading deletes. Should Fragments be preserved or orphaned? |
 | 2 | Are player profiles per-campaign characters or per-user? | Current model is per-user-per-campaign. Should a player be able to have multiple characters? |
 | 3 | Is there a notification system beyond Events? | Events notify recipients. Should other actions (new lore, track moves, comments) also notify? |
 | 4 | What is the mobile experience? | Is this desktop-first? Responsive? Native app? |
@@ -605,11 +721,14 @@ The Inbox answers the question "what do I need to do?" without requiring the use
 | 9 | Do players see "on behalf of" attribution on impersonated actions? | Or do they just see the player's name? UX decision. |
 | 10 | What are the exact navigation patterns for DM view vs Player view? | Principles defined (§3.7), details to be refined during design. |
 | 11 | What is the UX for the @mention picker? | How does the dropdown appear? How do users search/filter a potentially large campaign tree? Autocomplete? Categories? |
-| 12 | Should @mentions in comments also generate TODOs? | Currently specified for Lore Fragment rich text only. Comments are plain text — do they support @mentions too? |
-| 13 | What are the default auto-created Lore Fragments for custom entity types? | Default types (Plots, NPCs, Locations) have defined fragments. Do custom types always get Public Info + Private Notes? |
-| 14 | Can entities be re-anchored to a different session after creation? | If the DM realizes an NPC was actually introduced earlier, can they change the activation session? |
-| 15 | Should the TODO system support additional processing actions beyond Ignore and Create? | e.g., Link to existing statement, Mark as duplicate, Assign to another user. |
+| 12 | Should comments support @mentions? | Currently comments are plain text. Should they support @mentions with the same cross-referencing behavior as Fragment rich text? |
+| 13 | What are the default auto-created Fragments for custom entity Anchor types? | Default types (Plots, NPCs, Locations) have defined Fragments. Do custom types always get Public Info + Private Notes? |
+| 14 | Can entity Anchors be re-anchored to a different session after creation? | If the DM realizes an NPC was actually introduced earlier, can they change the activation session? |
+| 15 | ~~RESOLVED~~ | TODOs deferred. @mention References provide cross-referencing value without a processing queue. |
 | 16 | What does the Inbox UI look like? | Grouped by type? Chronological? Filterable? Badges/counts? |
+| 17 | Can the DM set up auto-requests on player join? | e.g., "Every new player automatically receives a request to write their backstory." Or is this always manual? |
+| 18 | Can a completed campaign be reopened? | Currently spec says no. Should the DM be able to revert to Active? |
+| 19 | ~~RESOLVED~~ | @mentioning a name that doesn't exist auto-creates a minimal Anchor of the appropriate type (see §3.9). No forward reference problem. |
 
 ---
 
@@ -624,7 +743,7 @@ Things we're explicitly not building in the first version:
 - File/image uploads (images via URL reference only)
 - Map tools or battle maps
 - Automated track movement rules — movement is always a DM decision
-- Showcase page builder / visual page editor (Puck) — replaced by rich text Lore Fragments
+- Showcase page builder / visual page editor (Puck) — replaced by rich text Fragments
 - Per-comment visibility (whisper/private comments)
 
 ---
@@ -635,25 +754,28 @@ The current codebase already implements:
 
 - ✅ Auth (Google OAuth, Discord OAuth, local dev auth)
 - ✅ Campaign CRUD with invite codes
-- ⚠️ Folders & sessions with ordering (Parts exist but need rework → Folders with custom naming, sessions need status field)
+- ⚠️ Folders & sessions with ordering (Parts exist but need rework → Aggregation nodes with custom naming, Session Anchors need status field)
 - ✅ Marker system with downtime/between states
-- ⚠️ Lore fragments (exist but need significant rework — type system, parent-child, edit permissions, comments, rich text with images)
+- ⚠️ Lore Nodes (exist as lore fragments but need significant rework → unified Lore Node model with kind/type, parent-child, edit permissions, comments, rich text with images)
 - ✅ Campaign tree sidebar navigation
 - 🗑️ Puck showcase editor (to be removed)
 - 🗑️ Showcase JSON fields on campaigns, folders, sessions (to be removed)
-- 🗑️ `allowContributions` on showcase level (replaced by edit permissions on Lore Fragments)
+- 🗑️ `allowContributions` on showcase level (replaced by edit permissions on Fragments)
 - 🗑️ Old scope/visibility model on lore (replaced by type-driven defaults)
-- ❌ Event type and notifications (not started)
-- ❌ Comments on Lore Fragments (not started)
+- ❌ Event Anchors and notifications (not started)
+- ❌ Comments on Fragments (not started)
 - ❌ Idle Goals & Tracks (not started)
-- ❌ Session lifecycle auto-fragment creation (not started)
+- ❌ Session lifecycle auto-Fragment creation (not started)
 - ❌ Story subtypes (not started)
 - ❌ Session transition summary (not started)
 - ❌ DM impersonation (not started)
 - ❌ DM view vs Player view (not started — current UI is one-size-fits-all)
-- ❌ Campaign Entities — Plots, NPCs, Locations, custom types (not started)
-- ❌ @Mentions and bidirectional links (not started)
-- ❌ TODO processing queue (not started)
+- ❌ Entity Anchors — Plots, NPCs, Locations, custom types (not started)
+- ❌ @Mentions with auto-creation, bidirectional links, and full-paragraph References (not started)
+- 🔮 TODO processing queue (deferred — may not be needed, References provide the value)
 - ❌ Inbox (not started)
+- ❌ Campaign status lifecycle — Prep/Active/Paused/Completed (not started)
+- ❌ Requests system (not started)
+- ❌ Player Slots with per-slot invites (not started — replaces old invite code model)
 - ❌ Shared type contracts between frontend/backend
 - ⚠️ Various minor bugs and performance issues (see audit)

@@ -51,13 +51,13 @@ Living index of all API endpoints. Updated each stage.
 | PATCH | `/api/sessions/:id` | Yes (DM) | Update session name/order/status |
 | DELETE | `/api/sessions/:id` | Yes (DM) | Delete session |
 
-## Marker (Stage 5b.2 — planned)
+## Marker (Stage 5b.2 — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | PATCH | `/api/campaigns/:id/marker` | Yes (DM) | Move marker (set sessionId + between) |
 
-## Lore Fragments (Stage 5c — planned)
+## Lore Fragments (Stage 5c — implemented)
 
 | Method | Path | Auth | Description |
 |---|---|---|---|

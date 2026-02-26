@@ -28,6 +28,10 @@ export interface CampaignDetail {
   description: string | null;
   dmId: string;
   inviteCode: string | null;
+  markerSessionId: string | null;
+  markerBetween: boolean;
+  showcaseJson: unknown;
+  allowContributions: boolean;
   createdAt: string;
   updatedAt: string;
   role: 'dm' | 'player';

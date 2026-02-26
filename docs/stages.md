@@ -106,7 +106,7 @@ CRUD endpoints for campaign parts and sessions. DM creates/updates/deletes parts
 
 ## Stage 5b.2 — Marker API
 
-**Status:** Planned
+**Status:** Done
 
 Endpoint to move the campaign marker. Business logic: setting marker on a session sets it to `played`, setting between requires session already played, bulk-updates prior sessions.
 
@@ -117,7 +117,7 @@ Endpoint to move the campaign marker. Business logic: setting marker on a sessio
 
 ## Stage 5c — Lore Fragments API
 
-**Status:** Planned
+**Status:** Done
 
 CRUD + sharing + visibility filtering for lore fragments. Story scope auto-publishes at read time when marker reaches the session.
 

@@ -12,7 +12,11 @@ import type { AuthUser } from './features/auth/hooks/use-auth';
 import { LoginPage } from './features/auth/components/login-page';
 import { RegisterPage } from './features/auth/components/register-page';
 import { CampaignListPage } from './features/campaigns/components/campaign-list-page';
-import { CampaignDetailPage } from './features/campaigns/components/campaign-detail-page';
+import { CampaignLayout } from './features/showcase/components/campaign-layout';
+import { CampaignShowcasePage } from './features/showcase/components/campaign-showcase-page';
+import { PartShowcasePage } from './features/showcase/components/part-showcase-page';
+import { SessionShowcasePage } from './features/showcase/components/session-showcase-page';
+import { PlayerProfilePage } from './features/showcase/components/player-profile-page';
 import { useAuth, useLogout } from './features/auth/hooks/use-auth';
 
 // ---------------------------------------------------------------------------
@@ -136,10 +140,34 @@ const campaignsRoute = createRoute({
   component: CampaignListPage,
 });
 
-const campaignDetailRoute = createRoute({
+const campaignLayoutRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '/campaigns/$campaignId',
-  component: CampaignDetailPage,
+  component: CampaignLayout,
+});
+
+const campaignShowcaseRoute = createRoute({
+  getParentRoute: () => campaignLayoutRoute,
+  path: '/',
+  component: CampaignShowcasePage,
+});
+
+const partShowcaseRoute = createRoute({
+  getParentRoute: () => campaignLayoutRoute,
+  path: '/parts/$partId',
+  component: PartShowcasePage,
+});
+
+const sessionShowcaseRoute = createRoute({
+  getParentRoute: () => campaignLayoutRoute,
+  path: '/sessions/$sessionId',
+  component: SessionShowcasePage,
+});
+
+const playerProfileRoute = createRoute({
+  getParentRoute: () => campaignLayoutRoute,
+  path: '/players/$userId',
+  component: PlayerProfilePage,
 });
 
 // ---------------------------------------------------------------------------
@@ -151,7 +179,12 @@ const routeTree = rootRoute.addChildren([
   authenticatedRoute.addChildren([
     indexRoute,
     campaignsRoute,
-    campaignDetailRoute,
+    campaignLayoutRoute.addChildren([
+      campaignShowcaseRoute,
+      partShowcaseRoute,
+      sessionShowcaseRoute,
+      playerProfileRoute,
+    ]),
   ]),
 ]);
 

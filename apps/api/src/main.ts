@@ -6,6 +6,7 @@ import { errorHandler } from './lib/error-middleware';
 import authRoutes from './features/auth/routes';
 import campaignRoutes from './features/campaigns/routes';
 import { partRoutes, sessionRoutes } from './features/parts/routes';
+import { campaignLoreRoutes, loreRoutes } from './features/lore/routes';
 
 const app = new Hono();
 
@@ -31,6 +32,8 @@ app.route('/api/auth', authRoutes);
 app.route('/api/campaigns', campaignRoutes);
 app.route('/api/parts', partRoutes);
 app.route('/api/sessions', sessionRoutes);
+app.route('/api/lore', loreRoutes);
+app.route('/api/campaigns/:id/lore', campaignLoreRoutes);
 
 const port = 3000;
 console.log(`Server is running on http://localhost:${port}`);

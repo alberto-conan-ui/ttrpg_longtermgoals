@@ -43,4 +43,22 @@ export const api = {
     });
     return handleResponse<T>(response);
   },
+
+  async patch<T>(path: string, body?: unknown): Promise<T> {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse<T>(response);
+  },
+
+  async delete<T>(path: string): Promise<T> {
+    const response = await fetch(`${API_BASE}${path}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    return handleResponse<T>(response);
+  },
 };

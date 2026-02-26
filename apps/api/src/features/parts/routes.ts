@@ -148,6 +148,76 @@ partRoutes.patch(
 );
 
 // ---------------------------------------------------------------------------
+// PATCH /api/parts/:id/showcase — Update part showcase
+// ---------------------------------------------------------------------------
+const updatePartShowcaseSchema = z.object({
+  showcaseJson: z.any().optional(),
+  allowContributions: z.boolean().optional(),
+});
+
+partRoutes.patch(
+  '/:id/showcase',
+  zValidator('json', updatePartShowcaseSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid showcase data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const partId = c.req.param('id');
+    const body = c.req.valid('json');
+
+    const campaign = await getCampaignForPart(partId);
+    const membership = await requireMembership(campaign.id, user.id);
+
+    const [part] = await db
+      .select()
+      .from(campaignParts)
+      .where(eq(campaignParts.id, partId))
+      .limit(1);
+
+    if (!part) {
+      throw new ApiError(404, 'PART_NOT_FOUND', 'Part not found');
+    }
+
+    const isOwner = part.showcaseOwnerId === user.id;
+    const isDm = membership.role === 'dm';
+    const canEdit = isDm || isOwner || part.allowContributions;
+    if (!canEdit) {
+      throw new ApiError(
+        403,
+        'NOT_AUTHORIZED',
+        'Only the owner, DM, or contributors can edit this showcase',
+      );
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (body.showcaseJson !== undefined) updates.showcaseJson = body.showcaseJson;
+    if (body.allowContributions !== undefined && isDm) {
+      updates.allowContributions = body.allowContributions;
+    }
+
+    const [updated] = await db
+      .update(campaignParts)
+      .set(updates)
+      .where(eq(campaignParts.id, partId))
+      .returning();
+
+    return c.json({ data: updated });
+  },
+);
+
+// ---------------------------------------------------------------------------
 // DELETE /api/parts/:id — Delete part (cascades sessions)
 // ---------------------------------------------------------------------------
 partRoutes.delete('/:id', async (c) => {
@@ -268,6 +338,76 @@ sessionRoutes.patch(
     if (!updated) {
       throw new ApiError(404, 'SESSION_NOT_FOUND', 'Session not found');
     }
+
+    return c.json({ data: updated });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// PATCH /api/sessions/:id/showcase — Update session showcase
+// ---------------------------------------------------------------------------
+const updateSessionShowcaseSchema = z.object({
+  showcaseJson: z.any().optional(),
+  allowContributions: z.boolean().optional(),
+});
+
+sessionRoutes.patch(
+  '/:id/showcase',
+  zValidator('json', updateSessionShowcaseSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid showcase data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const sessionId = c.req.param('id');
+    const body = c.req.valid('json');
+
+    const campaign = await getCampaignForSession(sessionId);
+    const membership = await requireMembership(campaign.id, user.id);
+
+    const [session] = await db
+      .select()
+      .from(campaignSessions)
+      .where(eq(campaignSessions.id, sessionId))
+      .limit(1);
+
+    if (!session) {
+      throw new ApiError(404, 'SESSION_NOT_FOUND', 'Session not found');
+    }
+
+    const isOwner = session.showcaseOwnerId === user.id;
+    const isDm = membership.role === 'dm';
+    const canEdit = isDm || isOwner || session.allowContributions;
+    if (!canEdit) {
+      throw new ApiError(
+        403,
+        'NOT_AUTHORIZED',
+        'Only the owner, DM, or contributors can edit this showcase',
+      );
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (body.showcaseJson !== undefined) updates.showcaseJson = body.showcaseJson;
+    if (body.allowContributions !== undefined && isDm) {
+      updates.allowContributions = body.allowContributions;
+    }
+
+    const [updated] = await db
+      .update(campaignSessions)
+      .set(updates)
+      .where(eq(campaignSessions.id, sessionId))
+      .returning();
 
     return c.json({ data: updated });
   },

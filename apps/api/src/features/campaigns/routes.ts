@@ -466,9 +466,234 @@ app.get('/:id/parts', async (c) => {
 });
 
 // ---------------------------------------------------------------------------
+// PATCH /api/campaigns/:id/marker — Move marker (DM only)
+// ---------------------------------------------------------------------------
+const updateMarkerSchema = z.object({
+  sessionId: z.string().uuid().nullable(),
+  between: z.boolean().default(false),
+});
+
+app.patch(
+  '/:id/marker',
+  zValidator('json', updateMarkerSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid marker data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const campaignId = c.req.param('id');
+    const { sessionId, between } = c.req.valid('json');
+
+    // Verify DM
+    const [membership] = await db
+      .select()
+      .from(campaignMembers)
+      .where(
+        and(
+          eq(campaignMembers.campaignId, campaignId),
+          eq(campaignMembers.userId, user.id),
+          eq(campaignMembers.role, 'dm'),
+        ),
+      )
+      .limit(1);
+
+    if (!membership) {
+      throw new ApiError(403, 'NOT_DM', 'Only the DM can move the marker');
+    }
+
+    // Clearing the marker (back to preparation mode)
+    if (sessionId === null) {
+      const [updated] = await db
+        .update(campaigns)
+        .set({
+          markerSessionId: null,
+          markerBetween: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(campaigns.id, campaignId))
+        .returning();
+
+      if (!updated) {
+        throw new ApiError(404, 'CAMPAIGN_NOT_FOUND', 'Campaign not found');
+      }
+
+      return c.json({ data: updated });
+    }
+
+    // Get all sessions ordered globally (part sortOrder → session sortOrder)
+    const allSessions = await db
+      .select({
+        sessionId: campaignSessions.id,
+        partSort: campaignParts.sortOrder,
+        sessionSort: campaignSessions.sortOrder,
+        status: campaignSessions.status,
+      })
+      .from(campaignSessions)
+      .innerJoin(campaignParts, eq(campaignSessions.partId, campaignParts.id))
+      .where(eq(campaignParts.campaignId, campaignId))
+      .orderBy(asc(campaignParts.sortOrder), asc(campaignSessions.sortOrder));
+
+    // Verify the target session belongs to this campaign
+    const markerIdx = allSessions.findIndex((s) => s.sessionId === sessionId);
+    if (markerIdx === -1) {
+      throw new ApiError(
+        400,
+        'SESSION_NOT_IN_CAMPAIGN',
+        'The specified session does not belong to this campaign',
+      );
+    }
+
+    // If between=true, the referenced session must already be played
+    if (between && allSessions[markerIdx].status !== 'played') {
+      throw new ApiError(
+        400,
+        'SESSION_NOT_PLAYED',
+        'Cannot set marker between — the referenced session must already be played',
+      );
+    }
+
+    // Setting marker ON a session → mark that session as played
+    if (!between) {
+      await db
+        .update(campaignSessions)
+        .set({ status: 'played' })
+        .where(eq(campaignSessions.id, sessionId));
+    }
+
+    // Bulk-update all sessions BEFORE the marker to played
+    const priorSessionIds = allSessions
+      .slice(0, markerIdx)
+      .filter((s) => s.status !== 'played')
+      .map((s) => s.sessionId);
+
+    if (priorSessionIds.length > 0) {
+      await db
+        .update(campaignSessions)
+        .set({ status: 'played' })
+        .where(inArray(campaignSessions.id, priorSessionIds));
+    }
+
+    // Update marker on the campaign
+    const [updated] = await db
+      .update(campaigns)
+      .set({
+        markerSessionId: sessionId,
+        markerBetween: between,
+        updatedAt: new Date(),
+      })
+      .where(eq(campaigns.id, campaignId))
+      .returning();
+
+    if (!updated) {
+      throw new ApiError(404, 'CAMPAIGN_NOT_FOUND', 'Campaign not found');
+    }
+
+    return c.json({ data: updated });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// PATCH /api/campaigns/:id/showcase — Update campaign showcase (DM only)
+// ---------------------------------------------------------------------------
+const updateShowcaseSchema = z.object({
+  showcaseJson: z.any().optional(),
+  allowContributions: z.boolean().optional(),
+});
+
+app.patch(
+  '/:id/showcase',
+  zValidator('json', updateShowcaseSchema, (result, c) => {
+    if (result.success === false) {
+      return c.json(
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid showcase data',
+            status: 400,
+            details: result.error.issues,
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user');
+    const campaignId = c.req.param('id');
+    const body = c.req.valid('json');
+
+    // Verify DM
+    const [membership] = await db
+      .select()
+      .from(campaignMembers)
+      .where(
+        and(
+          eq(campaignMembers.campaignId, campaignId),
+          eq(campaignMembers.userId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (!membership) {
+      throw new ApiError(
+        404,
+        'CAMPAIGN_NOT_FOUND',
+        'Campaign not found or you are not a member',
+      );
+    }
+
+    // Campaign showcase is owned by the DM
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.id, campaignId))
+      .limit(1);
+
+    if (!campaign) {
+      throw new ApiError(404, 'CAMPAIGN_NOT_FOUND', 'Campaign not found');
+    }
+
+    const canEdit =
+      membership.role === 'dm' || campaign.allowContributions;
+    if (!canEdit) {
+      throw new ApiError(
+        403,
+        'NOT_AUTHORIZED',
+        'Only the DM or contributors can edit this showcase',
+      );
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (body.showcaseJson !== undefined) updates.showcaseJson = body.showcaseJson;
+    if (body.allowContributions !== undefined && membership.role === 'dm') {
+      updates.allowContributions = body.allowContributions;
+    }
+
+    const [updated] = await db
+      .update(campaigns)
+      .set(updates)
+      .where(eq(campaigns.id, campaignId))
+      .returning();
+
+    return c.json({ data: updated });
+  },
+);
+
+// ---------------------------------------------------------------------------
 // Visibility helper — determines which session IDs are visible to a player
 // ---------------------------------------------------------------------------
-async function getVisibleSessionIds(campaignId: string) {
+export async function getVisibleSessionIds(campaignId: string) {
   const [campaign] = await db
     .select({
       markerSessionId: campaigns.markerSessionId,

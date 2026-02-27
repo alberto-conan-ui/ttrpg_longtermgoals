@@ -9,8 +9,8 @@
 ## Current Status
 
 **Phase:** Specification
-**Last session:** 2026-02-26
-**State:** Spec v0.12 drafted. Unified Lore Node model (Aggregation, Anchor, Fragment). @Mentions auto-create Anchors, References show full paragraphs, TODOs deferred. Use cases being built against Lost Mine of Phandelver — UC-001, UC-002, UC-003 drafted.
+**Last session:** 2026-02-27
+**State:** Spec v0.13 drafted. Statements model added. UC-001 through UC-004 complete. UC-005 (Full Session Prep stress test) drafted — complete tree for Session 1 "Goblin Arrows" with 15+ Fragments, 5 levels of nesting, all story subtypes exercised.
 
 ## Next Actions
 
@@ -75,6 +75,12 @@
 | 44 | 2026-02-27 | References are computed, not stored | References are not a property of the Anchor. They are a computed view — the system queries all Fragments containing @mentions pointing at an Anchor and assembles them on the fly. Source of truth is always the @mention links in Fragments. |
 | 45 | 2026-02-27 | References appear at the bottom of every Anchor page | Regardless of which child Fragment the user is viewing (Public Info, Private Notes, etc.), the References section is always visible at the bottom. They belong to the Anchor, not to any individual Fragment. |
 | 46 | 2026-02-27 | References grouped by source Anchor | Format: `[TYPE] Anchor Name (visibility)` as group header, then `Fragment Name →` paragraph. Multiple references from the same source Anchor are clustered together for easy scanning. |
+| 47 | 2026-02-27 | Statements are ordered, multi-source knowledge units on Anchor Fragments | Each Fragment has rich text (narrative) AND an ordered list of Statements (key facts). Position = importance. Each statement has allocated sources providing provenance. |
+| 48 | 2026-02-27 | Allocation replaces References-as-flat-list and deferred TODOs | @mentions arrive as unallocated mentions. The DM allocates them to statements (new or existing). Allocated mentions disappear from the unallocated list. The unallocated list IS the processing inbox. |
+| 49 | 2026-02-27 | Allocation sources are general-purpose — any Lore Node | Not just @mentions. Scene Fragments, events, any Lore Node can be a source for a statement. Session prep naturally feeds the knowledge graph. |
+| 50 | 2026-02-27 | Superseding preserves old statements and their sources as nested history | A newer statement can absorb older ones. The old statement nests under the new one with its sources intact. Sources do not merge — they stay on the original statement. |
+| 51 | 2026-02-27 | Anyone with edit access can manage statements | Follows the same edit permission model as Fragments. DM manages all entity statements. Players can manage statements on Anchors they have edit access to. |
+| 52 | 2026-02-27 | Allocated mentions are hidden from the unallocated list | Once a mention is allocated to a statement, it only appears as a source on that statement. The unallocated list shrinks as the DM processes. |
 
 ---
 
@@ -191,5 +197,43 @@ This is a collaborative campaign companion for tabletop RPG groups. Both DMs and
 - New open questions surfaced: @mention type picker UX for auto-creation, deletion of Anchors with incoming References, Reference visibility filtering for players.
 
 **What's next:**
-- Build UC-004 (DM activates campaign, places marker, runs first session with players).
-- Continue validating the Lore Node model and References through walkthroughs.
+- Build UC-005 (DM activates campaign, places marker, runs first session with players).
+- Continue validating the Lore Node model, Statements, and Allocation through walkthroughs.
+
+### Session 4 — 2026-02-27
+
+**Context:** Continued discussion on how @mention references should be processed. The flat References list from v0.12 felt incomplete — the DM could see mentions but had no structured way to process them into actionable knowledge.
+
+**What happened:**
+- User proposed **Statements** as the structured layer between raw @mentions and entity pages.
+- Statements are ordered, multi-source, supersedable knowledge units attached to Fragments on Anchors.
+- Rich text stays as the narrative/atmosphere layer. Statements are the structured summary layer. Both coexist on every Fragment.
+- **Allocation** replaces both the flat References list and the deferred TODO system:
+  - @mentions arrive as unallocated mentions on the target Anchor
+  - The DM (or anyone with edit access) allocates them to statements — either creating new ones or adding to existing ones
+  - Allocated mentions disappear from the unallocated list and become sources on statements
+- Allocation is **general-purpose** — not just @mentions. Scene Fragments, events, any Lore Node can be a source for a statement.
+- **Superseding** allows knowledge evolution: a newer statement absorbs an older one, nesting it underneath with all its sources preserved.
+- UC-001 through UC-003 updated to reflect the new model (References → Unallocated Mentions, foreshadowing of statements).
+- UC-004 (Statement Allocation & Knowledge Building) drafted — full walkthrough of the allocation workflow using Lost Mine of Phandelver.
+- Spec updated from v0.12 to v0.13.
+
+**Key design breakthroughs:**
+- Statements solve the TODO problem more elegantly — instead of Ignore/Create, the DM builds structured knowledge by allocating mentions into ordered, sourced statements.
+- The unallocated mentions list IS the natural processing inbox. No separate queue needed.
+- Multi-source statements accumulate evidence from across the campaign — a fact gets stronger as more sources confirm it.
+- Superseding creates an auditable knowledge evolution trail without losing history.
+- General-purpose allocation means session prep scenes, events, and any content can feed the knowledge graph — not just @mentions.
+
+**UC-005 added (same session):**
+- UC-005 (Full Session Prep) drafted as a stress test of the data model against a real session.
+- Expanded Session 1 "Goblin Arrows" from UC-001 skeleton into 15+ Fragments across 5 levels of nesting.
+- Exercised all story subtypes: Scene, Fight, Dialogue, Discovery, Travel, General + Mechanics Fragments for stat blocks and reference cards.
+- Complete session tree produced — the key deliverable. Demonstrates the full prep structure a DM would create.
+- Analysis section identifies what the tree proves (navigable, branching works, mechanics alongside narrative, @mentions connect everything) and what issues it surfaces (depth, scale, dungeon map gap, mechanics side-by-side view).
+- New open questions surfaced: Mechanics Fragment independent visibility, session objectives as first-class feature.
+
+**What's next:**
+- Human reviews spec v0.13, UC-004, and UC-005.
+- Resolve new open questions (§5 #20-23 + Mechanics visibility + session objectives).
+- Build UC-006 (DM activates campaign, places marker, runs first session with players — the live play use case).

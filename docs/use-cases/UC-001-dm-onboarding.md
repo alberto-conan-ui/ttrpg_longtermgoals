@@ -1,7 +1,7 @@
 # UC-001 — DM Onboarding & First Session Prep
 
 **Status:** In progress
-**Spec version:** v0.8
+**Spec version:** v0.13
 **Campaign:** Lost Mine of Phandelver (D&D 5e Starter Set)
 
 ## Summary
@@ -58,6 +58,8 @@ A new DM registers, creates the Lost Mine of Phandelver campaign, and preps thei
 
 10. DM is satisfied with the prep and transitions the session status from **Planning** → **Planned**.
 
+> **Note on Statements:** The scene Fragments created during session prep ("The Goblin Ambush", "Cragmaw Hideout", "Confronting Klarg", etc.) are valid allocation sources for statements on entity Anchors. In UC-004, the DM will allocate some of these scenes as sources when building statements on NPCs and Locations. Session prep naturally feeds the knowledge graph.
+
 ## Done when
 
 - [ ] User can register via Google OAuth and land on a campaign list
@@ -85,7 +87,7 @@ Tests should cover:
 
 ## Spec sections tested
 
-§4.1, §4.2, §3.1, §3.2 (Session Status), §3.3 (Lore Fragments — rich text, parent-child, types, subtypes), §3.3.2
+§4.1, §4.2, §3.1, §3.2 (Session Status), §3.3 (Fragments — rich text, parent-child, types, subtypes), §3.3.2. Scene Fragments created here are allocation sources for UC-004 (§3.10).
 
 ## Spec changes triggered
 

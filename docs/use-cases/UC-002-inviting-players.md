@@ -1,7 +1,7 @@
 # UC-002 — Inviting Players & Player Onboarding
 
 **Status:** Draft
-**Spec version:** v0.10
+**Spec version:** v0.13
 **Campaign:** Lost Mine of Phandelver (D&D 5e Starter Set)
 **Continues from:** UC-001
 
@@ -38,7 +38,9 @@ The DM creates player slots in the campaign tree, pre-seeds character-specific c
    - A **Request**: "Write your character backstory on your Player Profile" — linked to their profile.
 10. Player 1 clicks through to their Player Profile. They see the DM's briefing: the details about Gundren, the wagon job, the 10 gold payment.
 11. Player 1 creates a Lore Fragment on their profile — **Story/Public, subtype: General** — titled **"Thorin Ironforge"**:
-    > *Dwarf fighter. Former soldier from Neverwinter. Gundren and I fought together in the orc raids ten years ago. When he asked me to escort his wagon, I couldn't say no — I owe him my life. He mentioned a "discovery" but wouldn't say more. Knowing Gundren, it's either a gold mine or trouble. Probably both.*
+    > *Dwarf fighter. Former soldier from Neverwinter. @Gundren Rockseeker and I fought together in the orc raids ten years ago. When he asked me to escort his wagon, I couldn't say no — I owe him my life. He mentioned a "discovery" but wouldn't say more. Knowing Gundren, it's either a gold mine or trouble. Probably both.*
+
+    > **What happens:** The `@Gundren Rockseeker` mention creates an unallocated mention on Gundren's Anchor page. The DM will see this in their unallocated list and can later allocate it to a statement (see UC-004).
 12. Player 1 marks the backstory request as **completed**.
 
 ### More players join
@@ -104,7 +106,7 @@ Tests should cover:
 
 ## Spec sections tested
 
-§4.1, §3.13 (Player Slots), §3.12 (Requests), §3.11 (Inbox), §3.2 (Campaign Status — Prep), §3.3 (Lore Fragments on Player Profiles)
+§4.1, §3.13 (Player Slots), §3.12 (Requests), §3.11 (Inbox), §3.2 (Campaign Status — Prep), §3.3 (Fragments on Player Profiles), §3.9 (@Mentions in backstories create unallocated mentions — feeds UC-004)
 
 ## Spec changes triggered
 

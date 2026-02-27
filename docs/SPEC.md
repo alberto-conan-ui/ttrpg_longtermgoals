@@ -1,7 +1,7 @@
 # TTRPG Long-Term Goals — Product Specification
 
-> **Status:** DRAFT v0.12 — @Mentions auto-create Anchors, References with full paragraphs, TODOs deferred.
-> **Last updated:** 2026-02-26
+> **Status:** DRAFT v0.13 — Statements model, allocation replaces References-as-flat-list and deferred TODOs.
+> **Last updated:** 2026-02-27
 
 ---
 
@@ -105,10 +105,14 @@ Campaign (Aggregation)
 ├── Plots (Aggregation)
 │   ├── "The Strahd Conspiracy" (Anchor — Plot, Story/Public, from Session 1)
 │   │   ├── Public Statements (Fragment — Story/Public, auto-created)
-│   │   │   ├── "The party learned of Strahd's curse" ← from Session 1 Recap
-│   │   │   └── "Kolyan's letter mentions a dark lord" ← from Session 1 Recap
+│   │   │   ├── (rich text: narrative overview of the conspiracy)
+│   │   │   └── Statements (ordered list):
+│   │   │       ├── 1. "The party learned of Strahd's curse" (2 sources)
+│   │   │       └── 2. "Kolyan's letter mentions a dark lord" (1 source)
 │   │   ├── Private Statements (Fragment — Story/Private, auto-created)
-│   │   │   └── "Strahd is aware of the party's arrival" (DM only)
+│   │   │   ├── (rich text: DM's hidden notes)
+│   │   │   └── Statements (ordered list):
+│   │   │       └── 1. "Strahd is aware of the party's arrival" (1 source)
 │   │   └── "The Tome of Strahd" (Anchor — Plot, Story/Private, from Session 2)
 │   │       ├── Public Statements (Fragment) ...
 │   │       └── Private Statements (Fragment) ...
@@ -234,6 +238,31 @@ Fragments can have children. This creates a tree structure within a Fragment —
 - **Children belong to their parent Lore Node.** For top-level Fragments, the parent is an Anchor (e.g., a Session or NPC). For nested Fragments, the parent is another Fragment. Children inherit their context from the root of their node tree.
 - Children have their own type, visibility, and edit permissions independent of the parent.
 
+#### Statements
+
+Statements are an ordered list of short, atomic knowledge units attached to a Fragment. While a Fragment's rich text provides narrative and atmosphere — world-building prose, scene descriptions, detailed notes — its Statements capture the key structured facts. Together, rich text and statements give every Fragment two complementary views: the story and the summary.
+
+**What a Statement contains:**
+
+| Property | Description |
+|---|---|
+| **Text** | A short, atomic fact or claim (e.g., "Has the map to Wave Echo Cave", "Hired the party to escort supplies to Phandalin"). |
+| **Sort order** | Position in the list. Higher = more important. The DM (or anyone with edit access) drags statements to reorder them. |
+| **Allocated sources** | A list of links to Lore Nodes that back this statement — @mention references, scene Fragments, event Fragments, or any other Lore Node. Sources provide provenance: where does this knowledge come from? |
+| **Superseded children** | Optional. Other statements that this statement has superseded (rolled up). The old statements nest under the new one, preserving their text and sources as history. |
+
+**Key properties:**
+
+- **Statements inherit visibility** from their parent Fragment. A statement on a Story/Private Fragment is private. A statement on a Story/Public Fragment follows the same marker-based reveal rules.
+- **Anyone with edit access** on the parent Anchor can create, allocate, reorder, and supersede statements. This follows the same permission model as Fragment editing.
+- **Statements are per-Fragment**, not per-Anchor. An NPC Anchor with Public Info and Private Notes Fragments has two separate ordered statement lists — one public, one private. This maps naturally to "what players know" vs "what only the DM knows."
+
+**Superseding (roll-up):**
+
+Knowledge evolves during a campaign. A newer statement can supersede an older one by dragging the old statement under it. The superseded statement nests beneath its parent, preserving its text and all its allocated sources. This creates an auditable knowledge trail.
+
+Example: An NPC Anchor has a statement "The bartender is lying about the missing shipment" (backed by 3 sources). Later, the party discovers the bartender was telling the truth. The DM creates a new statement "The bartender was telling the truth — the shipment was stolen by the Redbrands" and drags the old statement under it. Both statements and all their sources are preserved. The old one is visually nested, indicating it has been superseded.
+
 #### 3.3.1 Fragment Types
 
 Every Fragment has a **type** that describes what kind of content it is. The type sets defaults and determines automatic behavior.
@@ -282,9 +311,13 @@ Since Fragments are the only content surface, each Anchor and Aggregation in the
 - **Folder (Aggregation) page:** Fragments attached to the folder (e.g., arc-level overview).
 - **Session (Anchor) page:** The auto-created Fragments (Session Notes for DM, Session Summary for players, Recap when played) plus any additional Fragments.
 - **Player Profile (Anchor) page:** Fragments attached to that player (backstory, journal entries, etc.).
-- **Entity (Anchor) page:** Auto-created Fragments (Public/Private Statements or Info/Notes) plus any additional Fragments. Below all Fragment content, a **References** section shows every incoming @mention with full paragraph context (see §3.9). References are computed, not stored — they appear persistently at the bottom of the Anchor page regardless of which Fragment the user is viewing.
+- **Entity (Anchor) page:** Auto-created Fragments (Public/Private Statements or Info/Notes) plus any additional Fragments. Each Fragment displays its rich text content followed by its ordered Statements list (if any). Below all Fragments, an **Unallocated Mentions** section shows @mention references that have not yet been allocated to any statement (see §3.9). This section is the DM's processing inbox — as mentions are allocated, they disappear from here and appear as sources on their assigned statements.
 
-The UI renders Fragments as a vertical stream of rich text documents, grouped and labeled by type. On Anchor pages, the References section follows the Fragments.
+The UI renders Fragments as a vertical stream, each containing:
+1. **Rich text** — the narrative/atmospheric content
+2. **Statements** — an ordered list of key facts, each showing source count (expandable to see all sources). Superseded statements are visually nested under their parent statement.
+
+At the bottom of Anchor pages, the **Unallocated Mentions** section shows incoming @mentions awaiting processing.
 
 ### 3.4 Idle Goals & Tracks
 
@@ -401,8 +434,9 @@ Three entity types ship with every campaign:
 The narrative threads of the campaign. The root plot is the main story; subplots branch from it or from each other.
 
 - Auto-created child Fragments: **Public Statements** (Story/Public) and **Private Statements** (Story/Private).
-- Public Statements are things the players know about this plot thread. Private Statements are things only the DM knows.
-- The References section on the Plot page shows every @mention of this plot across the campaign, with full paragraph context — this is how the plot's narrative history builds up organically (see §3.9).
+- Each Fragment contains rich text (narrative overview of the plot thread) AND an ordered Statements list (the key facts — things known or secret about this plot).
+- Public Statements = what the players know. Private Statements = DM-only knowledge.
+- As @mentions referencing the plot are allocated into statements, the plot page becomes a structured summary of its entire narrative history — with provenance links back to every source (see §3.9).
 - Subplots nest under their parent plot (Anchor under Anchor).
 
 **NPCs**
@@ -410,13 +444,15 @@ The narrative threads of the campaign. The root plot is the main story; subplots
 The characters of the campaign world.
 
 - Auto-created child Fragments: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
-- Public Info is what the players know about this character. Private Notes are the DM's secrets.
+- Each Fragment contains rich text (character description, atmosphere) AND an ordered Statements list (key facts about this character).
+- Public Info = what the players know about this character. Private Notes = the DM's secrets.
 
 **Locations**
 
 The places in the campaign world.
 
 - Auto-created child Fragments: **Public Info** (Story/Public) and **Private Notes** (Story/Private).
+- Each Fragment contains rich text (location description) AND an ordered Statements list (key facts about this place).
 - Locations can nest (e.g., a room inside a building inside a city — Anchor under Anchor).
 
 #### Custom Entity Types
@@ -432,7 +468,7 @@ The @mention system is a universal cross-referencing tool. Anywhere a user is wr
 #### What an @mention creates
 
 1. **A visible link in the text.** The `@reference` renders as a clickable link to the target node. Readers can click through to navigate to it.
-2. **A backlink on the target.** The target node records that it was mentioned, including the full paragraph where the mention appears and which Fragment/session it came from. When viewing the target node, all incoming references are visible with full context — the node becomes a self-assembling dossier of everywhere it appears in the campaign.
+2. **A backlink on the target.** The target node records that it was mentioned, including the full paragraph where the mention appears and which Fragment/session it came from. When viewing the target node, the mention appears in the **Unallocated Mentions** section until it is allocated to a statement (see Allocation below). Over time, as mentions are allocated, the Anchor page builds up a structured, sourced summary of everything the campaign knows about it.
 
 #### Auto-creation of Anchors
 
@@ -446,40 +482,55 @@ When a user types `@` and references a name that doesn't yet exist as an Anchor,
 
 This means the DM never needs to pre-create entities. They write naturally — "@Klarg rules the upper cavern" — and Klarg exists as a navigable NPC from that moment. The DM fills in details whenever they choose, or never — the references section on the Anchor page already tells the story.
 
-#### References (computed view)
+#### Unallocated Mentions
 
-References are **not stored data on the Anchor**. They are a computed view — the system queries all Fragments in the campaign that contain an @mention pointing at this Anchor and assembles the list on the fly. The source of truth is always the @mention links inside each Fragment.
+When an @mention creates a backlink on a target Anchor, the mention initially appears as an **unallocated mention** — an incoming reference that hasn't yet been processed into a statement. Unallocated mentions are computed, not stored — the system queries all Fragments containing @mentions pointing at this Anchor and filters out those that have already been allocated to a statement.
 
-The **References** section appears at the **bottom of every Anchor page**, regardless of which child Fragment the user is currently viewing. Whether the DM is looking at an NPC's Public Info, Private Notes, or any other child Fragment, the References are always visible beneath the content. They belong to the Anchor, not to any individual Fragment.
+The **Unallocated Mentions** section appears at the **bottom of every Anchor page**, below all Fragments and their statements. It is the DM's processing inbox for this entity.
 
-Each Reference displays:
+Each unallocated mention displays:
 - The **full paragraph** from the source Fragment where the @mention appears
 - The **origin label** in the format: `[TYPE] Anchor Name (visibility) →` followed by the paragraph
 - Clickable @mention links within the paragraph (e.g., other NPCs, Locations mentioned in the same paragraph)
 
-References are **grouped by the source Anchor** they come from. This makes it easy to scan — the DM sees "here's everything the Cragmaw Hideout location says about this NPC" as a cluster, rather than a flat chronological list.
+Unallocated mentions are **grouped by the source Anchor** they come from, making them easy to scan.
 
-For example, Klarg's NPC page might show:
+As the DM (or anyone with edit access) allocates mentions into statements, they disappear from this section. When all mentions have been allocated, the section is empty — the entity has been fully processed.
 
-> **[LOCATION] Cragmaw Hideout (public)**
->
-> *Public Info →* "A cave along the Triboar Trail. Goblin den."
->
-> *Private Notes →* "Home to **@Klarg** (bugbear leader), **@Yeemik** (second-in-command), and a dozen goblins. **@Sildar Hallwinter** is held prisoner here. Contains stolen supplies from the **@Lionshield Coster**. A trail from here eventually leads to **@Cragmaw Castle**."
+#### Allocation
 
-> **[NPC] Yeemik (public)**
->
-> *Private Notes →* "Goblin second-in-command at **@Cragmaw Hideout**. Hates **@Klarg**. Will betray him if the party offers to help. Holds **@Sildar Hallwinter** prisoner."
+Allocation is the mechanism that connects sources to statements. It is the core action that turns raw references into structured knowledge.
 
-> **[PLOT] The Cragmaw Goblins (public)**
->
-> *Private Statements →* "**@King Grol** leads the tribe from **@Cragmaw Castle**. **@Klarg** commands the outpost at **@Cragmaw Hideout**. They're working for **@Nezznar the Black Spider**."
+**How allocation works:**
 
-This makes the Anchor page a self-assembling dossier — the DM can see everything the campaign knows about this entity, grouped by where it came from, without ever writing a line in the entity's own Fragments.
+1. The user sees an unallocated mention (or any Lore Node they want to link).
+2. They either **create a new statement** from it, or **allocate it to an existing statement** on the Anchor.
+3. Once allocated, the mention disappears from the Unallocated section and appears as a source on the statement.
+
+**Sources are general-purpose.** Allocation is not limited to @mentions. Any Lore Node in the campaign tree can be a source for a statement:
+- **@mention references** — the most common entry point. The DM writes naturally, mentions appear on entity pages, the DM processes them.
+- **Scene Fragments** — the DM preps a session with scenes, then creates statements on relevant Anchors and allocates the scenes as sources. "This scene will reveal this fact about this NPC."
+- **Event Fragments** — an event during downtime produces a new fact about an entity.
+- **Other Fragments** — any written content that provides evidence for a statement.
+
+**Multi-source statements.** A single statement can accumulate sources from across the campaign. "Gundren has the map to Wave Echo Cave" might be backed by mentions from King Grol's notes, the Lost Mine plot, and Cragmaw Castle's description. Each source adds provenance — the statement gets stronger as more evidence points to it.
+
+**Cross-Anchor allocation.** A source can be allocated to statements on different Anchors. A single @mention paragraph that references both an NPC and a Location can be allocated to statements on both.
+
+**Allocation direction.** Allocation is directional: source → statement. The source Fragment's content is never modified by the allocation — it remains the source of truth.
+
+#### Superseding
+
+Knowledge evolves. A newer statement can supersede older statements by dragging them under it. The superseded statement nests beneath its parent, preserving its text and all its allocated sources intact. The sources do not merge — they remain on the original statement they were allocated to.
+
+This creates a visible knowledge evolution trail:
+- "The bartender is lying about the missing shipment" (3 sources) → **superseded by** → "The bartender was telling the truth — the shipment was stolen by the Redbrands" (2 sources)
+
+The old statement and its sources are always accessible (nested under the new one) but visually subordinated. The current understanding is what the DM and players see at the top level.
 
 #### Bidirectional links
 
-Links are always bidirectional. From the source, you can navigate to the target. From the target, you can navigate back to every source that references it, with the full paragraph context shown inline. For entities like Plots, this means the Plot page naturally accumulates a history of every moment in the campaign where it was relevant — every recap scene, every event, every comment that mentioned it — all linked and traceable.
+Links are always bidirectional. From the source, you can navigate to the target. From the target, you can see the source as either an allocated source on a statement (processed) or as an unallocated mention (awaiting processing). For entities like Plots, this means the Plot page naturally accumulates a structured history of everything the campaign knows about it — organized into ordered statements with full provenance, rather than a flat list of paragraphs.
 
 #### Who can @mention
 
@@ -487,16 +538,17 @@ Anyone who can edit a Fragment can add @mentions to it. The DM can @mention anyt
 
 > **NOTE:** The exact UX for the @mention picker (how the dropdown appears, how users search/filter the tree, how it handles large campaigns) is a design question to be refined.
 
-### 3.10 TODOs (Future — Not in Initial Scope)
+### 3.10 Statements & Allocation (Replaces TODOs)
 
-> **Status:** Deferred. The @mention system (§3.9) with auto-creation and bidirectional references provides sufficient cross-referencing without a processing queue. TODOs may be introduced later if the DM needs a way to explicitly process mentions into curated content on entity pages. For now, the References section on each Anchor page serves this purpose organically.
+> **Status:** Active. Statements and the allocation mechanism replace the previously deferred TODO system. Instead of a generic Ignore/Create processing queue, the DM builds structured knowledge on each entity by allocating @mentions (and other sources) into ordered, supersedable statements.
 
-If implemented in the future, the TODO system would work as follows:
+The full Statements model is defined in §3.3 (Fragments → Statements). The allocation mechanism is defined in §3.9 (@Mentions → Allocation). Together they provide:
 
-- Every @mention optionally generates a **TODO** on the target node — a lightweight processing queue telling the node's owner "something referenced you, decide what to do about it."
-- **Ownership:** The TODO appears for the owner of the target node. For entities, the owner is the DM. For Player Profiles, the owner is the player. The DM can always process any TODO.
-- **Processing actions:** Ignore (acknowledge and clear) or Create new statement/entry (adds curated content to the target Anchor's Fragments with a provenance link back to the source mention).
-- **State:** Pending (unprocessed) or Processed (action taken).
+- **A natural processing inbox:** Unallocated mentions on each Anchor page tell the DM "these references haven't been processed yet." As the DM allocates them, the inbox empties.
+- **Structured knowledge building:** Instead of flat reference lists, entities accumulate ordered statements with full provenance — the DM can see what is known, how important it is, and where the knowledge came from.
+- **Knowledge evolution:** Superseding lets the DM capture how understanding changes over time without losing the original evidence.
+
+This is strictly more useful than the deferred TODO model (Ignore/Create) because allocation produces something the DM actually wants — a curated, prioritised summary of each entity.
 
 ### 3.11 Inbox
 
@@ -509,7 +561,7 @@ Every user (DM and players) has an **Inbox** — a consolidated view of everythi
 - **Events** shared with the user that they haven't responded to.
 - **Idle Goal availability** during downtime — tracks the user can declare intent on.
 - **New content** revealed by a marker advance — a summary of what became visible since the user last checked.
-- **New @mention references** on Anchors the user owns — informational, showing that something new pointed at their entity. (Future: these could become TODOs if a processing queue is added, see §3.10.)
+- **New unallocated @mention references** on Anchors the user owns — indicating that new mentions have arrived and need to be allocated into statements (see §3.10).
 
 #### Role differences
 
@@ -675,19 +727,27 @@ Per-slot invites let the DM personalise the onboarding experience for each playe
 - Read public statements/info Fragments on visible Anchors.
 - @mention visible Anchors from any Fragment they can edit.
 
-### 4.9 @Mentions (Everyone)
+### 4.9 @Mentions & Allocation (Everyone)
 
 - Type `@` in any Fragment's rich text editor to reference any Lore Node in the campaign tree.
 - If the @mentioned name doesn't exist yet, the system auto-creates a minimal Anchor of the appropriate type (see §3.9).
 - Mentions render as clickable links to the target node.
-- Mentions create backlinks on the target — the **full paragraph** from the source is shown in the target's References section.
+- Mentions create backlinks on the target — appearing as **unallocated mentions** on the target's Anchor page until processed.
 - All links are bidirectional: source → target and target → source.
 - Players can only @mention Lore Nodes they can see.
+- Anyone with edit access on an Anchor can **allocate** unallocated mentions to statements — either creating a new statement or adding to an existing one.
+- Allocation is general-purpose: any Lore Node (scene Fragment, event, etc.) can be manually allocated as a source to a statement on any Anchor.
 
-### 4.10 TODOs (Future — Not in Initial Scope)
+### 4.10 Statements & Allocation (Everyone with Edit Access)
 
-- Deferred. See §3.10 for future design if needed.
-- The @mention References system (§3.9) provides the cross-referencing value without a processing queue.
+- View ordered statements on each Fragment of an Anchor page. Statements show source count, expandable to see all sources.
+- Create new statements manually or from unallocated mentions.
+- Allocate unallocated @mentions to existing statements (the mention disappears from unallocated, appears as a source).
+- Allocate any Lore Node (scene, event, etc.) as a source to a statement on any Anchor.
+- Reorder statements by dragging (position = importance).
+- Supersede a statement by dragging an older statement under a newer one. Superseded statements are visually nested with their sources preserved.
+- A single statement can accumulate sources from multiple Fragments across the campaign.
+- A single source can be allocated to statements on multiple Anchors.
 
 ### 4.11 Inbox (Everyone)
 
@@ -724,11 +784,15 @@ Per-slot invites let the DM personalise the onboarding experience for each playe
 | 12 | Should comments support @mentions? | Currently comments are plain text. Should they support @mentions with the same cross-referencing behavior as Fragment rich text? |
 | 13 | What are the default auto-created Fragments for custom entity Anchor types? | Default types (Plots, NPCs, Locations) have defined Fragments. Do custom types always get Public Info + Private Notes? |
 | 14 | Can entity Anchors be re-anchored to a different session after creation? | If the DM realizes an NPC was actually introduced earlier, can they change the activation session? |
-| 15 | ~~RESOLVED~~ | TODOs deferred. @mention References provide cross-referencing value without a processing queue. |
+| 15 | ~~RESOLVED~~ | TODOs replaced by Statements & Allocation (§3.10). Unallocated mentions are the natural processing inbox; allocation builds structured knowledge on Anchors. |
 | 16 | What does the Inbox UI look like? | Grouped by type? Chronological? Filterable? Badges/counts? |
 | 17 | Can the DM set up auto-requests on player join? | e.g., "Every new player automatically receives a request to write their backstory." Or is this always manual? |
 | 18 | Can a completed campaign be reopened? | Currently spec says no. Should the DM be able to revert to Active? |
 | 19 | ~~RESOLVED~~ | @mentioning a name that doesn't exist auto-creates a minimal Anchor of the appropriate type (see §3.9). No forward reference problem. |
+| 20 | Can statements be moved between Fragments on the same Anchor? | e.g., from Private Notes to Public Info when the DM decides to reveal a fact. Does the statement keep its sources? |
+| 21 | Should the system suggest allocations based on keyword matching? | When a new @mention arrives, could the system suggest "this looks like it matches statement X"? Or is manual allocation always preferred? |
+| 22 | What happens to statements when their parent Fragment is deleted? | Are they orphaned? Deleted? Moved to another Fragment on the same Anchor? |
+| 23 | Can players see allocated sources on statements, or just the statement text? | Players see the statement, but should they see where the knowledge came from (the source links)? Or is provenance DM-only? |
 
 ---
 
@@ -771,8 +835,8 @@ The current codebase already implements:
 - ❌ DM impersonation (not started)
 - ❌ DM view vs Player view (not started — current UI is one-size-fits-all)
 - ❌ Entity Anchors — Plots, NPCs, Locations, custom types (not started)
-- ❌ @Mentions with auto-creation, bidirectional links, and full-paragraph References (not started)
-- 🔮 TODO processing queue (deferred — may not be needed, References provide the value)
+- ❌ @Mentions with auto-creation, bidirectional links, unallocated mentions, and allocation (not started)
+- ❌ Statements & Allocation — ordered statements on Fragments, allocation of @mentions and other sources, superseding (not started)
 - ❌ Inbox (not started)
 - ❌ Campaign status lifecycle — Prep/Active/Paused/Completed (not started)
 - ❌ Requests system (not started)

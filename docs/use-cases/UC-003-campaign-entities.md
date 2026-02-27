@@ -1,13 +1,13 @@
 # UC-003 — DM Sets Up Campaign Entities with @Mentions
 
 **Status:** Draft
-**Spec version:** v0.12
+**Spec version:** v0.13
 **Campaign:** Lost Mine of Phandelver (D&D 5e Starter Set)
 **Continues from:** UC-002
 
 ## Summary
 
-The DM — still in Prep — builds the narrative backbone of the campaign by creating Plots, NPCs, and Locations as Anchor nodes, and uses @mentions throughout to link them together. Many entities are auto-created simply by being @mentioned for the first time. By the end, the DM clicks through each entity page to verify that the References section shows the full context of every mention — building a self-assembling, navigable web without any manual processing.
+The DM — still in Prep — builds the narrative backbone of the campaign by creating Plots, NPCs, and Locations as Anchor nodes, and uses @mentions throughout to link them together. Many entities are auto-created simply by being @mentioned for the first time. By the end, the DM clicks through each entity page to verify that unallocated mentions have accumulated correctly — each Anchor page shows the raw mentions awaiting allocation into statements. UC-004 continues from here with the actual statement allocation workflow.
 
 ## Walkthrough
 
@@ -89,16 +89,16 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
    - **Public Statements**: *"Goblins ambushed you on the Triboar Trail. Their trail leads to @Cragmaw Hideout."*
    - **Private Statements**: *"@King Grol leads the tribe from @Cragmaw Castle. @Klarg commands the outpost at @Cragmaw Hideout. They're working for @Nezznar the Black Spider."*
 
-### DM verifies the References web — clicking through every entity
+### DM verifies the unallocated mentions — clicking through every entity
 
-7. The DM has finished writing. Now they click through each entity to verify the References show the correct full-paragraph context. This is the key validation of the @mention system.
+7. The DM has finished writing. Now they click through each entity to verify that unallocated mentions have accumulated correctly. This is the key validation of the @mention system. All mentions are currently **unallocated** — the DM will process them into statements in UC-004.
 
    **DM clicks on "Gundren Rockseeker":**
 
    The page shows:
-   - **Public Info**: the text the DM wrote (escort job, rode ahead with Sildar)
-   - **Private Notes**: the text the DM wrote (map, captive, brothers)
-   - **References** (7 incoming mentions, grouped by source Anchor):
+   - **Public Info**: the text the DM wrote (escort job, rode ahead with Sildar). No statements yet.
+   - **Private Notes**: the text the DM wrote (map, captive, brothers). No statements yet.
+   - **Unallocated Mentions** (7 incoming mentions, grouped by source Anchor):
 
    > **[PLOT] The Lost Mine of Wave Echo Cave (public)**
    >
@@ -124,13 +124,13 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
    >
    > *Private Statements →* "@Nezznar the Black Spider seeks the Forge of Spells within @Wave Echo Cave. He has hired @King Grol and the Cragmaw goblins to find @Gundren Rockseeker's map. He controls @Glasstaff and the @Redbrands to maintain power in @Phandalin."
 
-   The DM can see Gundren's entire narrative footprint, grouped by where the information comes from. The References section IS the dossier.
+   The DM can see Gundren's entire unprocessed mention footprint, grouped by where the information comes from. These will become structured statements in UC-004.
 
 8. **DM clicks on "Klarg":**
 
    - **Public Info**: *(empty)*
-   - **Private Notes**: the text about commanding goblins at Cragmaw Hideout
-   - **References** (3 incoming mentions, grouped by source):
+   - **Private Notes**: the text about commanding goblins at Cragmaw Hideout. No statements yet.
+   - **Unallocated Mentions** (3 incoming mentions, grouped by source):
 
    > **[NPC] Yeemik (public)**
    >
@@ -144,13 +144,13 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
    >
    > *Private Statements →* "@King Grol leads the tribe from @Cragmaw Castle. @Klarg commands the outpost at @Cragmaw Hideout. They're working for @Nezznar the Black Spider."
 
-   Even though Klarg's own Public Info is empty, the References tell the DM everything about him in context.
+   Even though Klarg's own Public Info is empty, the unallocated mentions already tell the DM everything about him in context — ready to be distilled into statements.
 
 9. **DM clicks on "Cragmaw Hideout" (Location):**
 
    - **Public Info**: "A cave along the Triboar Trail. Goblin den."
-   - **Private Notes**: the text about Klarg, Yeemik, Sildar, stolen supplies
-   - **References** (5 incoming mentions, grouped by source):
+   - **Private Notes**: the text about Klarg, Yeemik, Sildar, stolen supplies. No statements yet.
+   - **Unallocated Mentions** (5 incoming mentions, grouped by source):
 
    > **[NPC] Klarg (public)**
    >
@@ -170,18 +170,18 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
    >
    > *Private Statements →* "@King Grol leads the tribe from @Cragmaw Castle. @Klarg commands the outpost at @Cragmaw Hideout. They're working for @Nezznar the Black Spider."
 
-   The location page shows who's there, what's happening, and how it connects to the broader plot — all assembled from References. Notice how the Cragmaw Goblins plot has two references grouped together.
+   The location page shows who's there, what's happening, and how it connects to the broader plot — all from unallocated mentions awaiting processing.
 
 10. **DM clicks on "The Lost Mine of Wave Echo Cave" (Plot):**
 
-    - **Public Statements**: the text about the escort job
-    - **Private Statements**: the text about Gundren's capture
-    - **References** — this is the root plot, so it may not have many incoming mentions since other entities reference it less often than it references them. But the DM can see the full text of both Statements Fragments, and every child subplot is visible in the tree.
+    - **Public Statements**: the text about the escort job. No statements yet.
+    - **Private Statements**: the text about Gundren's capture. No statements yet.
+    - **Unallocated Mentions** — this is the root plot, so it may not have many incoming mentions since other entities reference it less often than it references them. The DM can see the full text of both Fragments, and every child subplot is visible in the tree.
 
 11. **DM clicks on "Nezznar the Black Spider" (NPC):**
 
-    - **Private Notes**: the text about being the hidden villain
-    - **References** (6 incoming mentions, grouped by source):
+    - **Private Notes**: the text about being the hidden villain. No statements yet.
+    - **Unallocated Mentions** (6 incoming mentions, grouped by source):
 
     > **[NPC] King Grol (private)**
     >
@@ -207,7 +207,7 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
     >
     > *Private Statements →* "@King Grol leads the tribe from @Cragmaw Castle. @Klarg commands the outpost at @Cragmaw Hideout. They're working for @Nezznar the Black Spider."
 
-    Every thread leads back to Nezznar. The References make the conspiracy visible — grouped by source, the DM can see that three different plots and two NPCs all point at him.
+    Every thread leads back to Nezznar. The unallocated mentions make the conspiracy visible — grouped by source, the DM can see that three different plots and two NPCs all point at him. In UC-004, these will be distilled into ordered statements that capture the key facts about Nezznar.
 
 ### DM reviews the campaign tree
 
@@ -228,24 +228,24 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
     │       ├── "The Redbrands" (Anchor — Plot, from Session 2)
     │       └── "The Cragmaw Goblins" (Anchor — Plot)
     ├── NPCs (Aggregation)
-    │   ├── Gundren Rockseeker (7 references)
-    │   ├── Sildar Hallwinter (4 references)
-    │   ├── Klarg (3 references)
-    │   ├── Yeemik (2 references)
-    │   ├── King Grol (private, 5 references)
-    │   ├── Nezznar the Black Spider (private, 6 references)
-    │   ├── Glasstaff (private, 4 references)
-    │   └── Lionshield Coster (2 references)
+    │   ├── Gundren Rockseeker (7 unallocated)
+    │   ├── Sildar Hallwinter (4 unallocated)
+    │   ├── Klarg (3 unallocated)
+    │   ├── Yeemik (2 unallocated)
+    │   ├── King Grol (private, 5 unallocated)
+    │   ├── Nezznar the Black Spider (private, 6 unallocated)
+    │   ├── Glasstaff (private, 4 unallocated)
+    │   └── Lionshield Coster (2 unallocated)
     └── Locations (Aggregation)
-        ├── Cragmaw Hideout (5 references)
-        ├── Cragmaw Castle (private, 4 references)
-        ├── Phandalin (from Session 2, 5 references)
+        ├── Cragmaw Hideout (5 unallocated)
+        ├── Cragmaw Castle (private, 4 unallocated)
+        ├── Phandalin (from Session 2, 5 unallocated)
         │   ├── Tresendar Manor (private)
         │   └── Stonehill Inn
-        └── Wave Echo Cave (private, 4 references)
+        └── Wave Echo Cave (private, 4 unallocated)
     ```
 
-13. The DM is ready to activate the campaign in UC-004.
+13. The DM has built the campaign's entity web. Every Anchor has unallocated mentions waiting to be processed. UC-004 continues from here — the DM allocates these mentions into ordered statements, building structured knowledge on each entity.
 
 ## Done when
 
@@ -259,14 +259,14 @@ The DM — still in Prep — builds the narrative backbone of the campaign by cr
 - [ ] DM can click into an auto-created Anchor and edit its visibility, session anchor, and child Fragments
 - [ ] @mentions render as clickable links in the text
 - [ ] Clicking an @mention link navigates to the target Anchor page
-- [ ] Anchor pages show a **References** section with all incoming @mentions
-- [ ] Each Reference displays the **full paragraph** from the source Fragment, plus the source's origin (Fragment name, parent Anchor/session)
-- [ ] References update live as new @mentions are added across the campaign
-- [ ] Other @mention links within a Reference paragraph are themselves clickable (e.g., clicking @King Grol in Gundren's Reference navigates to King Grol)
+- [ ] Anchor pages show an **Unallocated Mentions** section with all incoming @mentions that have not been allocated to statements
+- [ ] Each unallocated mention displays the **full paragraph** from the source Fragment, plus the source's origin (Fragment name, parent Anchor/session)
+- [ ] Unallocated mentions update live as new @mentions are added across the campaign
+- [ ] Other @mention links within an unallocated mention paragraph are themselves clickable (e.g., clicking @King Grol in Gundren's mention navigates to King Grol)
 - [ ] Entities with Story/Private visibility are not visible to players
 - [ ] Entities with Story/Public visibility are not visible during Prep (no marker)
 - [ ] Entities appear in the campaign tree grouped by type under Aggregation nodes
-- [ ] Reference counts are shown next to each entity in the campaign tree
+- [ ] Unallocated mention counts are shown next to each entity in the campaign tree
 - [ ] Automated test suite covers all of the above
 
 ## Test suite
@@ -277,22 +277,22 @@ Tests should cover:
 - **Nesting:** Subplot Anchor under plot Anchor, sub-location Anchor under location Anchor.
 - **@Mentions — explicit targets:** Typing `@` followed by an existing Anchor name creates a link to the target.
 - **@Mentions — auto-creation:** Typing `@` followed by a non-existent name auto-creates a minimal Anchor. Verify: created under correct Aggregation, correct type, Story/Private default, empty child Fragments, correct session anchor.
-- **@Mentions — multiple references to same target:** Mentioning the same Anchor in multiple Fragments creates multiple References on the target, each with its own paragraph context. Verify no duplicate Anchors created.
-- **Backlinks / References display:** When entity A mentions entity B, entity B's page shows a Reference with the full paragraph from entity A. Verify: paragraph text is correct, source origin label is correct (Fragment name + parent info), @mentions within the paragraph are clickable.
-- **Reference count:** Campaign tree shows reference count per entity. Verify count matches actual incoming mentions.
-- **Editing propagation:** If the DM edits a paragraph that contains @mentions, the References on the target update to reflect the new text.
-- **Deletion handling:** If a Fragment containing @mentions is deleted, the References on the target are removed. If an Anchor is deleted, @mentions pointing to it become... (open question — broken links? tombstones?).
-- **Visibility:** Private Anchors not visible to players. Public Anchors not visible during Prep. References from private sources not shown to players who can't see the source.
-- **Reference visibility filtering:** Players only see References from Fragments they have visibility to. The DM sees all References.
-- **Navigation round-trip:** Click @mention link from source → land on target's page → click a Reference origin link → land back at the source Fragment. Verify full bidirectional navigation.
-- **Integration flow:** Create NPCs → @mention Locations and Plots (some auto-created) → fill in Locations with @NPC mentions → fill in Plots with @NPC and @Location mentions → click through every entity page → verify References show correct full paragraphs → verify from player perspective nothing is visible during Prep.
+- **@Mentions — multiple mentions to same target:** Mentioning the same Anchor in multiple Fragments creates multiple unallocated mentions on the target, each with its own paragraph context. Verify no duplicate Anchors created.
+- **Unallocated mentions display:** When entity A mentions entity B, entity B's page shows an unallocated mention with the full paragraph from entity A. Verify: paragraph text is correct, source origin label is correct (Fragment name + parent info), @mentions within the paragraph are clickable.
+- **Unallocated count:** Campaign tree shows unallocated mention count per entity. Verify count matches actual incoming unallocated mentions.
+- **Editing propagation:** If the DM edits a paragraph that contains @mentions, the unallocated mentions on the target update to reflect the new text.
+- **Deletion handling:** If a Fragment containing @mentions is deleted, the unallocated mentions on the target are removed. If an Anchor is deleted, @mentions pointing to it become... (open question — broken links? tombstones?).
+- **Visibility:** Private Anchors not visible to players. Public Anchors not visible during Prep. Unallocated mentions from private sources not shown to players who can't see the source.
+- **Mention visibility filtering:** Players only see unallocated mentions from Fragments they have visibility to. The DM sees all mentions.
+- **Navigation round-trip:** Click @mention link from source → land on target's page → click an unallocated mention origin link → land back at the source Fragment. Verify full bidirectional navigation.
+- **Integration flow:** Create NPCs → @mention Locations and Plots (some auto-created) → fill in Locations with @NPC mentions → fill in Plots with @NPC and @Location mentions → click through every entity page → verify unallocated mentions show correct full paragraphs → verify from player perspective nothing is visible during Prep.
 
 ## Spec sections tested
 
-§3.1 (Lore Node model — Aggregation, Anchor, Fragment), §3.8 (Campaign Entities — Anchor types, auto-created Fragments), §3.9 (@Mentions — auto-creation, References display, bidirectional links), §3.3 (Fragments), §3.2 (Campaign Status — Prep), §4.8, §4.9
+§3.1 (Lore Node model — Aggregation, Anchor, Fragment), §3.8 (Campaign Entities — Anchor types, auto-created Fragments), §3.9 (@Mentions — auto-creation, unallocated mentions, bidirectional links), §3.3 (Fragments), §3.2 (Campaign Status — Prep), §4.8, §4.9. Unallocated mentions set up UC-004 (§3.10 Statements & Allocation).
 
 ## Spec changes triggered
 
 - **@mention type picker for auto-creation:** When the DM @mentions a name that doesn't exist, the system needs to know what type of Anchor to create (NPC, Plot, Location, custom). The spec (§3.9) says "of the appropriate type" but doesn't specify how the system determines this. Options: the DM picks from a dropdown when the auto-create happens, or the system infers from context (e.g., mentioning from the Plots section defaults to Plot). New open question.
-- **Deletion of Anchors with incoming References:** What happens to @mention links when the target Anchor is deleted? Broken links? Tombstones? The source text still has the mention. New open question.
-- **Reference visibility filtering:** When a player views an Anchor, they should only see References from Fragments they have permission to see. This is implied by the visibility model but not explicitly stated in §3.9. Should be added.
+- **Deletion of Anchors with incoming mentions:** What happens to @mention links when the target Anchor is deleted? Broken links? Tombstones? The source text still has the mention. New open question.
+- **Mention visibility filtering:** When a player views an Anchor, they should only see unallocated mentions (and statement sources) from Fragments they have permission to see. This is implied by the visibility model but not explicitly stated in §3.9. Should be added.
